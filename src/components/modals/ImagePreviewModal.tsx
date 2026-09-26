@@ -13,8 +13,11 @@ import {
   CloudCheck,
   HardDrive,
   FileText,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { LabScan } from '../../types/pharmacy';
+import { getScanImage } from '../../utils/scanStorage';
 
 interface ImagePreviewModalProps {
   scan: LabScan | null;
@@ -34,11 +37,90 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [imageSrc, setImageSrc] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     // Reset transform when scan changes
     setZoom(1);
     setRotation(0);
+    setHasError(false);
+    setIsLoading(true);
+
+    let isMounted = true;
+
+    const resolveImageSource = async () => {
+      if (!scan) return;
+
+      // 1. Direct in-memory full-resolution dataUrl
+      if (scan.dataUrl && scan.dataUrl.length > 50) {
+        if (isMounted) {
+          setImageSrc(scan.dataUrl);
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      // 2. Try loading from IndexedDB
+      if (scan.id) {
+        try {
+          const cached = await getScanImage(scan.id);
+          if (isMounted && cached && cached.length > 50) {
+            setImageSrc(cached);
+            setIsLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.warn('IndexedDB resolve error:', e);
+        }
+      }
+
+      // 3. Try Google Drive preview / thumbnail / fileUrl
+      if (scan.previewUrl) {
+        if (isMounted) {
+          setImageSrc(scan.previewUrl);
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      if (scan.fileId) {
+        if (isMounted) {
+          setImageSrc(`https://lh3.googleusercontent.com/d/${scan.fileId}`);
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      if (scan.driveUrl) {
+        const match = scan.driveUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+          if (isMounted) {
+            setImageSrc(`https://lh3.googleusercontent.com/d/${match[1]}`);
+            setIsLoading(false);
+          }
+          return;
+        }
+        if (isMounted) {
+          setImageSrc(scan.driveUrl);
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      if (isMounted) {
+        setImageSrc('');
+        setIsLoading(false);
+        setHasError(true);
+      }
+    };
+
+    resolveImageSource();
+
+    return () => {
+      isMounted = false;
+    };
   }, [scan]);
 
   useEffect(() => {
@@ -53,9 +135,6 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
   }, [onClose]);
 
   if (!scan) return null;
-
-  // Determine the best source image (local base64 full resolution or Google Drive direct preview)
-  const imageSrc = scan.dataUrl || scan.previewUrl || scan.thumbnailUrl || scan.driveUrl || '';
 
   const handleZoomIn = () => setZoom(z => Math.min(z + 0.25, 4));
   const handleZoomOut = () => setZoom(z => Math.max(z - 0.25, 0.5));
@@ -74,6 +153,15 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+  };
+
+  const handleImageError = () => {
+    // If primary source failed, try alternative Drive thumbnail URL
+    if (scan.fileId && !imageSrc.includes('thumbnail')) {
+      setImageSrc(`https://drive.google.com/thumbnail?id=${scan.fileId}&sz=w2000`);
+    } else {
+      setHasError(true);
+    }
   };
 
   return (
@@ -217,8 +305,13 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
         </div>
 
         {/* Viewport Area */}
-        <div className="flex-1 overflow-auto bg-[#0d0d0d] relative flex items-center justify-center p-4">
-          {imageSrc ? (
+        <div className="flex-1 overflow-auto bg-[#0d0d0d] relative flex items-center justify-center p-4 min-h-[300px]">
+          {isLoading ? (
+            <div className="text-center text-neutral-400 text-xs flex flex-col items-center gap-3">
+              <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+              <span>{lang === 'ar' ? 'جارِ جلب وتحميل الصورة بالدقة الكاملة...' : 'Loading full-resolution image...'}</span>
+            </div>
+          ) : imageSrc && !hasError ? (
             <div
               className="transition-transform duration-150 ease-out flex items-center justify-center max-w-full max-h-full"
               style={{
@@ -229,13 +322,33 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
               <img
                 src={imageSrc}
                 alt={scan.title || 'Medical Scan'}
+                onError={handleImageError}
                 className="max-w-full max-h-[78vh] object-contain rounded-lg shadow-2xl border border-neutral-800 pointer-events-auto"
                 style={{ imageRendering: 'auto' }}
               />
             </div>
           ) : (
-            <div className="text-center text-neutral-500 text-sm">
-              {lang === 'ar' ? 'تعذر تحميل مصدر الصورة' : 'Image source unavailable'}
+            <div className="text-center text-neutral-400 text-xs space-y-3 max-w-md p-6 bg-neutral-900/60 rounded-xl border border-neutral-800">
+              <AlertCircle className="w-8 h-8 text-amber-400 mx-auto" />
+              <div className="font-bold text-white text-sm">
+                {lang === 'ar' ? 'تعذر عرض الصورة الأصلية' : 'Image Source Unavailable'}
+              </div>
+              <p className="text-neutral-400 text-[11px] leading-relaxed">
+                {lang === 'ar'
+                  ? 'تم تسجيل بيانات الوصفة ولكن لم يتم حفظ ملف الصورة في ذاكرة المتصفح الحالية. يرجى إعادة إرفاق الصورة بدقة كاملة.'
+                  : 'Scan entry exists but image file is not present in local storage. Please re-attach the image.'}
+              </p>
+              {scan.driveUrl && (
+                <a
+                  href={scan.driveUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>{lang === 'ar' ? 'فتح الملف في Google Drive' : 'Open in Google Drive'}</span>
+                </a>
+              )}
             </div>
           )}
         </div>

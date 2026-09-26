@@ -4,7 +4,6 @@ import {
   Users,
   Stethoscope,
   BellRing,
-  ShieldAlert,
   Boxes,
   LineChart,
   Archive,
@@ -16,7 +15,6 @@ export type ViewType =
   | 'patients'
   | 'followup'
   | 'timeline'
-  | 'safety'
   | 'inventory'
   | 'reports'
   | 'archive'
@@ -27,7 +25,6 @@ interface NavigationProps {
   onSelectView: (view: ViewType) => void;
   dueRefillsCount: number;
   activeFollowUpsCount: number;
-  criticalSafetyCount: number;
   lang: 'ar' | 'en';
 }
 
@@ -36,7 +33,6 @@ export const Navigation: React.FC<NavigationProps> = ({
   onSelectView,
   dueRefillsCount,
   activeFollowUpsCount,
-  criticalSafetyCount,
   lang,
 }) => {
   const navItems: {
@@ -76,14 +72,6 @@ export const Navigation: React.FC<NavigationProps> = ({
       badgeColor: 'bg-rose-500/20 text-rose-400 border border-rose-500/30',
     },
     {
-      id: 'safety',
-      labelAr: 'رادار السلامة والـ AI',
-      labelEn: 'Safety Radar & AI',
-      icon: <ShieldAlert className="w-4 h-4" />,
-      badge: criticalSafetyCount > 0 ? criticalSafetyCount : undefined,
-      badgeColor: 'bg-red-600/20 text-red-400 border border-red-500/40',
-    },
-    {
       id: 'inventory',
       labelAr: 'توقع الطلب والمخزون',
       labelEn: 'Demand Forecast',
@@ -103,8 +91,8 @@ export const Navigation: React.FC<NavigationProps> = ({
     },
     {
       id: 'settings',
-      labelAr: 'الإعدادات والربط',
-      labelEn: 'Settings & Sync',
+      labelAr: 'الإعدادات والربط السحابي',
+      labelEn: 'Settings & Cloud Sync',
       icon: <SettingsIcon className="w-4 h-4" />,
     },
   ];

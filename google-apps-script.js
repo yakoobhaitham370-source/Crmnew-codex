@@ -1,512 +1,88 @@
 /**
  * ============================================================================
- * 🏥 PharmPulse Enterprise - Google Apps Script Backend (Code.gs)
- * الإصدار: 3.0.0 Enterprise Edition
+ * 🏥 PharmPulse Enterprise - Lightweight Fast Google Apps Script (Code.gs)
+ * الإصدار: 4.0.0 Ultra-Fast Edition
  * ============================================================================
  * 
- * 📖 تعليمات التركيب والربط السحابي (Deployment Instructions):
- * -------------------------------------------------------------
- * 1. افتح جدول بيانات Google Sheet الخاص بك (أو أنشئ شيت جديد من sheets.new).
- * 2. من القائمة العلوية اضغط على: الامتدادات (Extensions) > Apps Script.
- * 3. امسح أي كود موجود داخل الملف الافتراضي Code.gs، والصق هذا الملف كاملاً بدلاً منه.
- * 4. اضغط على زر الحفظ (أيقونة القرص 💾 أو Ctrl+S).
- * 5. في أعلى اليمين، اضغط على زر: نشر (Deploy) > نشر جديد (New deployment).
- * 6. اضغط على أيقونة الترس ⚙️ بجوار "Select type" واختر: تطبيق ويب (Web app).
- * 7. املأ الإعدادات التالية بدقة:
- *    - الوصف (Description): PharmPulse CRM API
+ * 📖 تعليمات التركيب والتفعيل:
+ * 1. افتح جدول بيانات Google Sheet (sheets.new).
+ * 2. اضغط: الامتدادات (Extensions) > Apps Script.
+ * 3. استبدل محتوى Code.gs بهذا الكود كاملاً واحفظ (💾 Ctrl+S).
+ * 4. في أعلى اليمين: نشر (Deploy) > نشر جديد (New deployment) > تطبيق ويب (Web app).
  *    - تنفيذ كـ (Execute as): أنا (Me)
- *    - من لديه إمكانية الوصول (Who has access): أي شخص (Anyone)  <--- ⚠️ هام جداً!
- *      (إذا اخترت "Only myself" أو "Anyone with Google account" سيفشل الاتصال!)
- * 8. اضغط على نشر (Deploy) ثم اضغط على منح الإذن (Authorize access).
- * 9. اختر حساب Google الخاص بك > اضغط على خيارات متقدمة (Advanced) > ثم اضغط على الانتقال إلى PharmPulse (غير آمن) > سماح (Allow).
- * 10. انسخ رابط تطبيق الويب (Web App URL) المنتهي بـ /exec والصقه في إعدادات PharmPulse CRM.
- * 
- * 💡 ملاحظة هامة:
- * إذا قمت بإنشاء السكريبت مستقلاً من موقع script.google.com (وليس من داخل الشيت)،
- * ضع معرف الشيت في المتغير SPREADSHEET_ID أدناه.
+ *    - من لديه حق الوصول (Who has access): أي شخص (Anyone)  <-- ⚠️ ضروري جداً
+ * 5. اضغط Deploy وامنح الصلاحيات (Authorize Access).
+ * 6. انسخ رابط تطبيق الويب (/exec) والصقه في خانة الربط في إعدادات التطبيق.
  * ============================================================================
  */
 
-// معرف جدول البيانات (اختياري: اتركه فارغاً إذا فتحت السكريبت من داخل Google Sheets)
-// إذا كان السكريبت مستقلاً، انسخ المعرف من رابط الشيت docs.google.com/spreadsheets/d/[ID]/edit
-const SPREADSHEET_ID = "";
-
-// أسماء أوراق العمل في قاعدة البيانات
 const SHEET_PATIENTS = "Patients_DB";
 const SHEET_FOLLOWUPS = "Clinical_FollowUps";
 const SHEET_SETTINGS = "Settings_Config";
-const SHEET_AUDIT_LOG = "Audit_Log";
-
-// اسم مجلد Google Drive لتخزين صور الروشتات والتحاليل
 const DRIVE_FOLDER_NAME = "PharmPulse_Prescriptions_Labs";
 
-// ============================================================================
-// 1. Google Sheets UI Menus (القوائم التفاعلية داخل الشيت)
-// ============================================================================
-
-/**
- * يتم تشغيل هذه الدالة تلقائياً عند فتح جدول البيانات لإضافة قائمة خاصة بـ PharmPulse
- */
-function onOpen() {
-  try {
-    SpreadsheetApp.getUi()
-      .createMenu("🏥 نظام PharmPulse CRM")
-      .addItem("⚡ تهيئة الجداول وتنسيق الأعمدة (Initialize Database)", "menuInitializeDatabase")
-      .addItem("🧪 اختبار الاتصال والصلاحيات (Test Connection)", "menuTestConnection")
-      .addSeparator()
-      .addItem("📊 إحصائيات قاعدة البيانات (Data Summary)", "menuShowSummary")
-      .addItem("🎨 إعادة تنسيق وتلوين الجداول (Format Tables)", "menuFormatTables")
-      .addSeparator()
-      .addItem("🗑️ مسح وتفريغ كافة البيانات (Clear All Data)", "menuClearDatabase")
-      .addSeparator()
-      .addItem("📖 تعليمات الربط السحابي (Deployment Help)", "menuShowInstructions")
-      .addToUi();
-  } catch (e) {
-    Logger.log("Notice: onOpen UI menu not available in current execution context.");
-  }
-}
-
-/**
- * دالة يدوية لتشغيلها من محرر Apps Script للتحقق من الصلاحيات والاتصال
- */
-function testConnection() {
-  try {
-    const ss = getSpreadsheet();
-    if (!ss) {
-      throw new Error("لم يتم العثور على Google Sheet. تأكد من فتح السكريبت عبر Extensions > Apps Script أو وضع SPREADSHEET_ID.");
-    }
-    initDatabaseSheetsIfMissing();
-    Logger.log("=================================================");
-    Logger.log("✅ نجاح الاتصال: تم التحقق من قاعدة بيانات PharmPulse بنجاح!");
-    Logger.log("📊 اسم جدول البيانات: " + ss.getName());
-    Logger.log("🔗 الرابط: " + ss.getUrl());
-    Logger.log("=================================================");
-    return "SUCCESS: " + ss.getName();
-  } catch (err) {
-    Logger.log("❌ فشل الاختبار: " + err.toString());
-    throw err;
-  }
-}
-
-function menuInitializeDatabase() {
-  initDatabaseSheetsIfMissing();
-  SpreadsheetApp.getUi().alert("✅ تم بنجاح!", "تم إنشاء وتنسيق كافة جداول قاعدة البيانات (المرضى، المتابعات السريرية، الإعدادات، وسجل العمليات) بنجاح.", SpreadsheetApp.getUi().ButtonSet.OK);
-}
-
-function menuTestConnection() {
-  const ss = getSpreadsheet();
-  const pCount = getPatientsCount();
-  const fCount = getFollowUpsCount();
-  SpreadsheetApp.getUi().alert("🧪 تقرير الاتصال السحابي", 
-    `• حالة الاتصال: متصل وجاهز (Online)\n• اسم الشيت: ${ss.getName()}\n• عدد المرضى المسجلين: ${pCount}\n• عدد المتابعات السريرية: ${fCount}\n• التوقيت: ${new Date().toLocaleString()}`, 
-    SpreadsheetApp.getUi().ButtonSet.OK
-  );
-}
-
-function menuShowSummary() {
-  const pCount = getPatientsCount();
-  const fCount = getFollowUpsCount();
-  SpreadsheetApp.getUi().alert("📊 ملخص بيانات PharmPulse CRM", 
-    `قاعدة البيانات نشطة:\n- إجمالي المرضى: ${pCount} مريض\n- إجمالي المتابعات السريرية: ${fCount} متابعة\n- مجلد Google Drive: جاهز لاستقبال صور الروشتات`, 
-    SpreadsheetApp.getUi().ButtonSet.OK
-  );
-}
-
-function menuFormatTables() {
-  initDatabaseSheetsIfMissing();
-  SpreadsheetApp.getUi().alert("🎨 تم إعادة تنسيق الجداول وتثبيت صفوف العناوين وتطبيق الألوان الطبية بنجاح.");
-}
-
-function menuShowInstructions() {
-  const html = HtmlService.createHtmlOutput(`
-    <div style="font-family: Arial, sans-serif; direction: rtl; text-align: right; padding: 15px;">
-      <h3 style="color: #0f6cbd;">خطوات الربط مع نظام PharmPulse:</h3>
-      <ol style="line-height: 1.8;">
-        <li>اضغط من القائمة العلوية على <b>Deploy (نشر)</b> &gt; <b>New deployment (نشر جديد)</b>.</li>
-        <li>اختر <b>Web app (تطبيق ويب)</b>.</li>
-        <li>اختر في Execute as: <b>Me</b>.</li>
-        <li>اختر في Who has access: <b>Anyone</b> (أي شخص).</li>
-        <li>انسخ رابط الـ Web App وضعه في إعدادات PharmPulse.</li>
-      </ol>
-    </div>
-  `).setWidth(450).setHeight(300);
-  SpreadsheetApp.getUi().showModalDialog(html, "دليل النشر والربط السحابي");
-}
-
-// ============================================================================
-// 2. HTTP GET Endpoint (جلب البيانات والاستعلام)
-// ============================================================================
-
-/**
- * معالجة طلبات GET من المتصفح ونظام PharmPulse
- */
-function doGet(e) {
-  try {
-    const ss = getSpreadsheet();
-    const action = (e && e.parameter && e.parameter.action) || "DEFAULT_VIEW";
-    const callback = e && e.parameter && e.parameter.callback;
-
-    // 1. إذا فتح المستخدم الرابط مباشرة في متصفح الويب كاختبار:
-    if (action === "DEFAULT_VIEW" && (!e || !e.parameter || Object.keys(e.parameter).length === 0)) {
-      return renderStatusHtmlPage(ss);
-    }
-
-    let result = {};
-
-    // 2. فحص استجابة الاتصال الخفيف (PING / HEALTH CHECK)
-    if (action === "PING" || action === "TEST") {
-      initDatabaseSheetsIfMissing();
-      result = {
-        status: "SUCCESS",
-        message: "PharmPulse Cloud API is Online and Healthy",
-        spreadsheetName: ss ? ss.getName() : "Direct Sheet",
-        spreadsheetId: ss ? ss.getId() : "",
-        timestamp: new Date().toISOString(),
-        version: "3.0.0-enterprise",
-        counts: {
-          patients: getPatientsCount(),
-          followUps: getFollowUpsCount()
-        }
-      };
-    }
-    // 3. جلب كافة البيانات (FETCH_ALL / GET_DATA)
-    else if (action === "FETCH_ALL" || action === "GET_DATA" || action === "DEFAULT_VIEW") {
-      initDatabaseSheetsIfMissing();
-      result = {
-        status: "SUCCESS",
-        timestamp: new Date().toISOString(),
-        patients: getAllPatientsFromSheet(),
-        followUps: getAllFollowUpsFromSheet(),
-        settings: getSettingsFromSheet(),
-        counts: {
-          patients: getPatientsCount(),
-          followUps: getFollowUpsCount()
-        }
-      };
-    }
-    // 4. تفريغ قاعدة البيانات ومسح كافة المرضى والمتابعات عبر GET
-    else if (action === "CLEAR_DATABASE" || action === "RESET_DATABASE") {
-      initDatabaseSheetsIfMissing();
-      clearSheetDataRows(SHEET_PATIENTS);
-      clearSheetDataRows(SHEET_FOLLOWUPS);
-      logAudit("CLEAR_DATABASE", "All patients and clinical follow-ups cleared via GET request.");
-      result = {
-        status: "SUCCESS",
-        message: "Google Sheet database emptied successfully",
-        timestamp: new Date().toISOString()
-      };
-    }
-    // 5. استعلام عن مريض محدد بواسطة ID أو رقم الهاتف
-    else if (action === "GET_PATIENT") {
-      const qId = e.parameter.id;
-      const qPhone = e.parameter.phone;
-      const all = getAllPatientsFromSheet();
-      const found = all.find(p => (qId && p.id === qId) || (qPhone && p.phone === qPhone));
-      result = {
-        status: found ? "SUCCESS" : "NOT_FOUND",
-        patient: found || null
-      };
-    } 
-    else {
-      result = {
-        status: "ERROR",
-        message: "Unknown action: " + action
-      };
-    }
-
-    const jsonString = JSON.stringify(result);
-
-    // دعم JSONP في حال منع المتصفح للـ CORS
-    if (callback) {
-      return ContentService.createTextOutput(callback + "(" + jsonString + ")")
-        .setMimeType(ContentService.MimeType.JAVASCRIPT);
-    }
-
-    return ContentService.createTextOutput(jsonString)
-      .setMimeType(ContentService.MimeType.JSON);
-
-  } catch (err) {
-    const errorResponse = JSON.stringify({
-      status: "ERROR",
-      message: err.toString(),
-      timestamp: new Date().toISOString()
-    });
-
-    if (e && e.parameter && e.parameter.callback) {
-      return ContentService.createTextOutput(e.parameter.callback + "(" + errorResponse + ")")
-        .setMimeType(ContentService.MimeType.JAVASCRIPT);
-    }
-    return ContentService.createTextOutput(errorResponse)
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-// ============================================================================
-// 3. HTTP POST Endpoint (حفظ وتحديث البيانات ورفع الصور)
-// ============================================================================
-
-/**
- * معالجة طلبات POST لإرسال التحديثات من CRM إلى Google Sheets & Google Drive
- */
-function doPost(e) {
-  try {
-    initDatabaseSheetsIfMissing();
-
-    let rawData = e.postData ? e.postData.contents : "";
-    if (!rawData) {
-      return jsonResponse({ status: "ERROR", message: "Empty payload received" });
-    }
-
-    let payload;
-    try {
-      payload = JSON.parse(rawData);
-    } catch (parseErr) {
-      return jsonResponse({ status: "ERROR", message: "Invalid JSON format: " + parseErr });
-    }
-
-    const action = payload.action || "SYNC_UPSTREAM";
-
-    // 1. مزامنة كاملة لقاعدة البيانات (Sync Upstream)
-    if (action === "SYNC_UPSTREAM" || action === "SAVE_ALL") {
-      const patients = payload.patients || [];
-      const followUps = payload.followUps || [];
-      const settings = payload.settings || null;
-
-      if (Array.isArray(patients)) {
-        savePatientsToSheet(patients);
-      }
-      if (Array.isArray(followUps)) {
-        saveFollowUpsToSheet(followUps);
-      }
-      if (settings) {
-        saveSettingsToSheet(settings);
-      }
-
-      logAudit("SYNC_ALL", `Synced ${patients.length} patients and ${followUps.length} follow-ups.`);
-
-      return jsonResponse({
-        status: "SUCCESS",
-        message: "Cloud database updated successfully",
-        patientsCount: patients.length,
-        followUpsCount: followUps.length,
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // تفريغ قاعدة البيانات ومسح كافة المرضى والمتابعات
-    if (action === "CLEAR_DATABASE" || action === "RESET_DATABASE") {
-      clearSheetDataRows(SHEET_PATIENTS);
-      clearSheetDataRows(SHEET_FOLLOWUPS);
-      logAudit("CLEAR_DATABASE", "All patients and clinical follow-ups cleared from Google Sheet.");
-      return jsonResponse({
-        status: "SUCCESS",
-        message: "Google Sheet database emptied successfully",
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // 2. حذف مريض نهائياً من الشيت
-    if (action === "DELETE_PATIENT") {
-      const pId = payload.patientId || (payload.patient && payload.patient.id);
-      if (pId === "ALL" || pId === "*") {
-        clearSheetDataRows(SHEET_PATIENTS);
-        clearSheetDataRows(SHEET_FOLLOWUPS);
-        logAudit("RESET_DATABASE", "All patients deleted from sheet");
-        return jsonResponse({ status: "SUCCESS", message: "All patients removed from Google Sheet" });
-      }
-      if (!pId) return jsonResponse({ status: "ERROR", message: "Missing patientId" });
-      const delSuccess = deletePatientFromSheet(pId);
-      deleteFollowUpsForPatient(pId);
-      logAudit("DELETE_PATIENT", "Deleted patient ID: " + pId);
-      return jsonResponse({ status: "SUCCESS", message: "Patient removed from Google Sheet", deleted: delSuccess });
-    }
-
-    // 3. حفظ مريض واحد فقط
-    if (action === "SAVE_PATIENT") {
-      if (!payload.patient || !payload.patient.id) {
-        return jsonResponse({ status: "ERROR", message: "Missing patient payload" });
-      }
-      savePatientsToSheet([payload.patient]);
-      logAudit("SAVE_PATIENT", `Saved patient ${payload.patient.name} (${payload.patient.id})`);
-      return jsonResponse({ status: "SUCCESS", message: "Patient saved successfully" });
-    }
-
-    // 3. حفظ متابعة سريرية واحدة
-    if (action === "SAVE_FOLLOWUP") {
-      if (!payload.followUp || !payload.followUp.id) {
-        return jsonResponse({ status: "ERROR", message: "Missing followUp payload" });
-      }
-      saveFollowUpsToSheet([payload.followUp]);
-      logAudit("SAVE_FOLLOWUP", `Saved follow-up ${payload.followUp.id}`);
-      return jsonResponse({ status: "SUCCESS", message: "Follow-up saved successfully" });
-    }
-
-    // 4. رفع صورة تحليل أو وصفة طبية إلى Google Drive
-    if (action === "UPLOAD_SCAN" || action === "UPLOAD_IMAGE") {
-      const driveRes = saveBase64ImageToDrive(payload.patientId, payload.title, payload.base64Data);
-      logAudit("UPLOAD_SCAN", `Uploaded scan for patient ${payload.patientId}`);
-      return jsonResponse({
-        status: "SUCCESS",
-        fileUrl: driveRes.fileUrl,
-        previewUrl: driveRes.previewUrl,
-        thumbnailUrl: driveRes.thumbnailUrl,
-        fileId: driveRes.fileId,
-        message: "Scan image saved to Google Drive"
-      });
-    }
-
-    // 5. حفظ إعدادات النظام
-    if (action === "SAVE_SETTINGS") {
-      if (payload.settings) {
-        saveSettingsToSheet(payload.settings);
-        logAudit("SAVE_SETTINGS", "Settings updated");
-        return jsonResponse({ status: "SUCCESS", message: "Settings saved successfully" });
-      }
-    }
-
-    // 6. فحص الاتصال عبر POST
-    if (action === "PING") {
-      return jsonResponse({ status: "SUCCESS", message: "POST handshake verified" });
-    }
-
-    return jsonResponse({ status: "ERROR", message: "Unhandled action: " + action });
-
-  } catch (err) {
-    logAudit("ERROR", err.toString());
-    return jsonResponse({ status: "ERROR", message: err.toString() });
-  }
-}
-
-// ============================================================================
-// 4. Database Initialization & Schema Definition
-// ============================================================================
-
-/**
- * الحصول على الشيت النشط أو الشيت المحدد بواسطة SPREADSHEET_ID
- */
 function getSpreadsheet() {
-  if (SPREADSHEET_ID && SPREADSHEET_ID.trim() !== "") {
-    try {
-      return SpreadsheetApp.openById(SPREADSHEET_ID.trim());
-    } catch (e) {
-      Logger.log("Failed to open spreadsheet by ID: " + e.toString());
-    }
-  }
-  const active = SpreadsheetApp.getActiveSpreadsheet();
-  if (active) return active;
-
-  throw new Error("لم يتم العثور على Google Sheet. إذا قمت بإنشاء السكريبت من script.google.com، يرجى وضع SPREADSHEET_ID في السطر 28.");
+  return SpreadsheetApp.getActiveSpreadsheet();
 }
 
 /**
- * تهيئة الأوراق والأعمدة وتطبيق التنسيقات الطبية الرسمية
+ * تهيئة الأوراق والأعمدة تلقائياً
  */
-function initDatabaseSheetsIfMissing() {
-  const ss = getSpreadsheet();
-
-  // 1. جدول المرضى (Patients_DB)
+function ensureDatabaseSchema(ss) {
+  // 1. جدول المرضى
   let pSheet = ss.getSheetByName(SHEET_PATIENTS);
   if (!pSheet) {
     pSheet = ss.insertSheet(SHEET_PATIENTS);
     const headers = [
-      "Patient ID",
-      "Full Name",
-      "Phone",
-      "Date of Birth",
-      "Age",
-      "Gender",
-      "Family Tag",
-      "Diagnosis",
-      "Clinical Notes",
-      "Allergies",
-      "Loyalty Points",
-      "Medications (JSON)",
-      "Vitals (JSON)",
-      "Scans (JSON)",
-      "Is Archived",
-      "Archived Date",
-      "Archive Reason",
-      "Last Reminder Sent",
-      "Created At",
-      "Last Updated"
+      "ID", "Name", "Phone", "Age", "Gender", "Family_Tag", "Diagnosis",
+      "Medications_Summary", "Prescription_Photos_URLs", "Loyalty_Points",
+      "Allergies", "Notes", "Vitals_JSON", "Medications_JSON", "Scans_JSON",
+      "Is_Archived", "Last_Updated"
     ];
     pSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-    pSheet.getRange(1, 1, 1, headers.length)
-      .setFontWeight("bold")
-      .setBackground("#0f6cbd")
-      .setFontColor("#ffffff")
-      .setHorizontalAlignment("center");
+    pSheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#1e293b").setFontColor("#f8fafc");
     pSheet.setFrozenRows(1);
+    pSheet.setColumnWidth(2, 180); // Name
+    pSheet.setColumnWidth(8, 240); // Meds
+    pSheet.setColumnWidth(9, 280); // Prescription Photos
   }
 
-  // 2. جدول المتابعات السريرية (Clinical_FollowUps)
+  // 2. جدول المتابعات السريرية
   let fSheet = ss.getSheetByName(SHEET_FOLLOWUPS);
   if (!fSheet) {
     fSheet = ss.insertSheet(SHEET_FOLLOWUPS);
-    const headers = [
-      "FollowUp ID",
-      "Patient ID",
-      "Patient Name",
-      "Phone",
-      "Type",
-      "Drug",
-      "Start Date",
-      "Due Date",
-      "Days Offset",
-      "Adherence Rate (%)",
-      "Systolic BP",
-      "Diastolic BP",
-      "Blood Glucose",
-      "Heart Rate",
-      "Milestone Title",
-      "Notes",
-      "Resolved",
-      "Resolved At",
-      "Created At",
-      "Last Updated"
-    ];
+    const headers = ["ID", "Patient_ID", "Patient_Name", "Phone", "Type", "Drug", "Due_Date", "Status", "Notes", "Created_At"];
     fSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-    fSheet.getRange(1, 1, 1, headers.length)
-      .setFontWeight("bold")
-      .setBackground("#1e3a5f")
-      .setFontColor("#ffffff")
-      .setHorizontalAlignment("center");
+    fSheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#1e293b").setFontColor("#f8fafc");
     fSheet.setFrozenRows(1);
   }
 
-  // 3. جدول الإعدادات وقوالب الرسائل (Settings_Config)
+  // 3. جدول الإعدادات
   let sSheet = ss.getSheetByName(SHEET_SETTINGS);
   if (!sSheet) {
     sSheet = ss.insertSheet(SHEET_SETTINGS);
-    const headers = ["Config Key", "Config Value", "Last Updated"];
+    const headers = ["Key", "Value", "Updated_At"];
     sSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-    sSheet.getRange(1, 1, 1, headers.length)
-      .setFontWeight("bold")
-      .setBackground("#3b82f6")
-      .setFontColor("#ffffff");
+    sSheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#1e293b").setFontColor("#f8fafc");
     sSheet.setFrozenRows(1);
-  }
-
-  // 4. جدول سجل العمليات السحابية (Audit_Log)
-  let lSheet = ss.getSheetByName(SHEET_AUDIT_LOG);
-  if (!lSheet) {
-    lSheet = ss.insertSheet(SHEET_AUDIT_LOG);
-    const headers = ["Timestamp", "Action", "Details"];
-    lSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-    lSheet.getRange(1, 1, 1, headers.length)
-      .setFontWeight("bold")
-      .setBackground("#292929")
-      .setFontColor("#ffffff");
-    lSheet.setFrozenRows(1);
   }
 }
 
-// ============================================================================
-// 5. Data Access & Persistence Functions
-// ============================================================================
+/**
+ * تحويل كائن المريض لصف في الشيت
+ */
+function patientToRow(p, nowStr) {
+  // ملخص الأدوية المقروء بالعين
+  const medsSummary = (p.medications || []).map(function(m) {
+    return (m.name || "") + (m.dose ? " " + m.dose : "") + (m.frequency ? " (" + m.frequency + ")" : "");
+  }).filter(Boolean).join(", ");
 
-function patientToRowValues(p, nowStr) {
-  // Sanitize scans to prevent base64 data URLs from exceeding the 50,000 character Google Sheets cell limit
+  // استخراج روابط صور الروشتات والتحاليل في Google Drive
+  const photoUrls = (p.scans || []).map(function(s) {
+    return s.driveUrl || s.previewUrl || (s.fileId ? "https://lh3.googleusercontent.com/d/" + s.fileId : "");
+  }).filter(Boolean).join("\n");
+
+  // تنظيف الـ Scans من الـ base64 لتجنب تجاوز حد 50 ألف حرف للخلية
   const cleanScans = (p.scans || []).map(function(s) {
     return {
       id: s.id || "",
@@ -514,10 +90,8 @@ function patientToRowValues(p, nowStr) {
       title: s.title || "",
       driveUrl: s.driveUrl || "",
       previewUrl: s.previewUrl || s.driveUrl || "",
-      thumbnailUrl: s.thumbnailUrl || "",
       fileId: s.fileId || "",
-      fileSize: s.fileSize || "",
-      uploadStatus: s.uploadStatus || "saved_to_drive"
+      fileSize: s.fileSize || ""
     };
   });
 
@@ -525,528 +99,265 @@ function patientToRowValues(p, nowStr) {
     p.id || "",
     p.name || "",
     p.phone || "",
-    p.dob || "",
     p.age !== undefined && p.age !== null ? p.age : "",
     p.gender || "",
     p.familyTag || "",
     p.diagnosis || "",
-    p.notes || "",
+    medsSummary,
+    photoUrls,
+    p.loyaltyPoints || 0,
     p.allergies || "",
-    p.loyaltyPoints !== undefined && p.loyaltyPoints !== null ? p.loyaltyPoints : 0,
-    JSON.stringify(p.medications || []),
+    p.notes || "",
     JSON.stringify(p.vitals || []),
+    JSON.stringify(p.medications || []),
     JSON.stringify(cleanScans),
     p.isArchived ? "TRUE" : "FALSE",
-    p.archivedDate || "",
-    p.archiveReason || "",
-    p.lastReminderSent || "",
-    p.createdAt || nowStr,
-    nowStr
+    p.lastUpdated || nowStr
   ];
 }
 
 /**
- * حفظ أو تحديث قائمة المرضى في الشيت باستخدام التحديث الدفعي فائق السرعة
+ * تحويل صف من الشيت إلى كائن مريض
  */
-function savePatientsToSheet(patients) {
-  if (!patients || patients.length === 0) return;
-  const ss = getSpreadsheet();
-  const sheet = ss.getSheetByName(SHEET_PATIENTS);
-  if (!sheet) return;
-
-  const nowStr = new Date().toISOString();
-  const lastRow = sheet.getLastRow();
-
-  // إذا كان الشيت يحتوي فقط على رأس الجدول
-  if (lastRow <= 1) {
-    const rows = patients.map(p => patientToRowValues(p, nowStr));
-    if (rows.length > 0) {
-      sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
-    }
-    return;
-  }
-
-  // قراءة كافة الصفوف الحالية لمعالجتها في الذاكرة دفعة واحدة (Batch In-Memory Update)
-  const data = sheet.getDataRange().getValues();
-  const idToRowIndex = {};
-  for (let r = 1; r < data.length; r++) {
-    const id = String(data[r][0] || '').trim();
-    if (id) idToRowIndex[id] = r;
-  }
-
-  let modifiedExisting = false;
-  const rowsToAppend = [];
-
-  patients.forEach(p => {
-    const pId = String(p.id || '').trim();
-    const rowValues = patientToRowValues(p, nowStr);
-    if (pId && idToRowIndex[pId] !== undefined) {
-      data[idToRowIndex[pId]] = rowValues;
-      modifiedExisting = true;
-    } else {
-      rowsToAppend.push(rowValues);
-    }
-  });
-
-  // حفظ التعديلات في استدعاء واحد فائق السرعة (أقل من 300 مللي ثانية)
-  if (modifiedExisting) {
-    sheet.getRange(1, 1, data.length, data[0].length).setValues(data);
-  }
-
-  // إضافة الصفوف الجديدة دفعة واحدة
-  if (rowsToAppend.length > 0) {
-    sheet.getRange(sheet.getLastRow() + 1, 1, rowsToAppend.length, rowsToAppend[0].length).setValues(rowsToAppend);
-  }
-}
-
-/**
- * مسح كافة الصفوف البيانية في ورقة محددة مع الإبقاء التام على رأس الجدول والتنسيقات
- */
-function clearSheetDataRows(sheetName) {
-  try {
-    const ss = getSpreadsheet();
-    const sheet = ss.getSheetByName(sheetName);
-    if (!sheet) return;
-    const lastRow = sheet.getLastRow();
-    const lastCol = Math.max(sheet.getLastColumn(), 1);
-    if (lastRow > 1) {
-      try {
-        sheet.getRange(2, 1, lastRow - 1, lastCol).clearContent();
-      } catch (errClear) {
-        Logger.log("clearContent note: " + errClear.toString());
-      }
-      try {
-        sheet.deleteRows(2, lastRow - 1);
-      } catch (errDel) {
-        Logger.log("deleteRows note: " + errDel.toString());
-      }
-    }
-  } catch (e) {
-    Logger.log("Error clearing sheet " + sheetName + ": " + e.toString());
-  }
-}
-
-function menuClearDatabase() {
-  const ui = SpreadsheetApp.getUi();
-  const resp = ui.alert("تحذير تفريغ البيانات", "هل أنت متأكد من مسح وتفريغ كافة سجلات المرضى والمتابعات من الشيت نهائياً؟", ui.ButtonSet.YES_NO);
-  if (resp === ui.Button.YES) {
-    clearSheetDataRows(SHEET_PATIENTS);
-    clearSheetDataRows(SHEET_FOLLOWUPS);
-    logAudit("MANUAL_CLEAR", "User manually cleared database from Google Sheet menu.");
-    ui.alert("✅ تم بنجاح!", "تم تفريغ كافة سجلات المرضى والمتابعات السريرية من الشيت بنجاح وبقيت رؤوس الجداول جاهزة.", ui.ButtonSet.OK);
-  }
-}
-
-/**
- * حذف مريض نهائياً من ورقة Patients_DB
- */
-function deletePatientFromSheet(patientId) {
-  if (!patientId) return false;
-  const ss = getSpreadsheet();
-  const sheet = ss.getSheetByName(SHEET_PATIENTS);
-  if (!sheet) return false;
-
-  const data = sheet.getDataRange().getValues();
-  for (let r = data.length - 1; r >= 1; r--) {
-    if (String(data[r][0]).trim() === String(patientId).trim()) {
-      sheet.deleteRow(r + 1);
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- * حذف كافة المتابعات السريرية المرتبطة بمريض محدد
- */
-function deleteFollowUpsForPatient(patientId) {
-  if (!patientId) return;
-  const ss = getSpreadsheet();
-  const sheet = ss.getSheetByName(SHEET_FOLLOWUPS);
-  if (!sheet) return;
-
-  const data = sheet.getDataRange().getValues();
-  for (let r = data.length - 1; r >= 1; r--) {
-    if (String(data[r][1]).trim() === String(patientId).trim()) {
-      sheet.deleteRow(r + 1);
-    }
-  }
-}
-
-function followUpToRowValues(f, nowStr) {
-  const adherence = f.adherenceRate !== undefined ? f.adherenceRate : (f.adherenceScore !== undefined ? f.adherenceScore : "");
-  const glucose = f.bloodGlucose !== undefined ? f.bloodGlucose : (f.glucose !== undefined ? f.glucose : "");
-
-  return [
-    f.id || "",
-    f.patientId || "",
-    f.patientName || "",
-    f.phone || "",
-    f.type || "",
-    f.drug || "",
-    f.startDate || "",
-    f.dueDate || "",
-    f.daysOffset !== undefined ? f.daysOffset : 0,
-    adherence,
-    f.systolic !== undefined ? f.systolic : "",
-    f.diastolic !== undefined ? f.diastolic : "",
-    glucose,
-    f.heartRate !== undefined ? f.heartRate : "",
-    f.milestoneTitle || "",
-    f.notes || "",
-    f.resolved ? "TRUE" : "FALSE",
-    f.resolvedAt || "",
-    f.createdAt || nowStr,
-    nowStr
-  ];
-}
-
-/**
- * حفظ أو تحديث المتابعات السريرية في الشيت بالتحديث الدفعي
- */
-function saveFollowUpsToSheet(followUps) {
-  if (!followUps || followUps.length === 0) return;
-  const ss = getSpreadsheet();
-  const sheet = ss.getSheetByName(SHEET_FOLLOWUPS);
-  if (!sheet) return;
-
-  const nowStr = new Date().toISOString();
-  const lastRow = sheet.getLastRow();
-
-  if (lastRow <= 1) {
-    const rows = followUps.map(f => followUpToRowValues(f, nowStr));
-    if (rows.length > 0) {
-      sheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
-    }
-    return;
-  }
-
-  const data = sheet.getDataRange().getValues();
-  const idToRowIndex = {};
-  for (let r = 1; r < data.length; r++) {
-    const id = String(data[r][0] || '').trim();
-    if (id) idToRowIndex[id] = r;
-  }
-
-  let modifiedExisting = false;
-  const rowsToAppend = [];
-
-  followUps.forEach(f => {
-    const fId = String(f.id || '').trim();
-    const rowValues = followUpToRowValues(f, nowStr);
-    if (fId && idToRowIndex[fId] !== undefined) {
-      data[idToRowIndex[fId]] = rowValues;
-      modifiedExisting = true;
-    } else {
-      rowsToAppend.push(rowValues);
-    }
-  });
-
-  if (modifiedExisting) {
-    sheet.getRange(1, 1, data.length, data[0].length).setValues(data);
-  }
-
-  if (rowsToAppend.length > 0) {
-    sheet.getRange(sheet.getLastRow() + 1, 1, rowsToAppend.length, rowsToAppend[0].length).setValues(rowsToAppend);
-  }
-}
-
-/**
- * قراءة كافة المرضى بصيغة متوافقة 100% مع واجهة PharmPulse
- */
-function getAllPatientsFromSheet() {
-  const ss = getSpreadsheet();
-  const sheet = ss.getSheetByName(SHEET_PATIENTS);
-  if (!sheet) return [];
-
-  const rows = sheet.getDataRange().getValues();
-  if (rows.length <= 1) return [];
-
-  const patients = [];
-  for (let r = 1; r < rows.length; r++) {
-    const row = rows[r];
-    if (!row[0]) continue; // تجاهل الصفوف الفارغة
-
-    let medications = [];
-    let vitals = [];
-    let scans = [];
-
-    try { medications = row[11] ? JSON.parse(row[11]) : []; } catch (e) {}
-    try { vitals = row[12] ? JSON.parse(row[12]) : []; } catch (e) {}
-    try { scans = row[13] ? JSON.parse(row[13]) : []; } catch (e) {}
-
-    // دعم التوافقية مع التنسيقات السابقة
-    if (medications.length === 0 && row[9]) {
-      try { medications = JSON.parse(row[9]); } catch(e) {}
-    }
-    if (vitals.length === 0 && row[10]) {
-      try { vitals = JSON.parse(row[10]); } catch(e) {}
-    }
-
-    patients.push({
-      id: String(row[0]),
-      name: String(row[1] || ""),
-      phone: String(row[2] || ""),
-      dob: row[3] ? String(row[3]) : undefined,
-      age: row[4] !== "" ? Number(row[4]) : (row[3] && !isNaN(Number(row[3])) ? Number(row[3]) : undefined),
-      gender: row[5] ? String(row[5]) : (row[4] ? String(row[4]) : ""),
-      familyTag: row[6] ? String(row[6]) : (row[5] ? String(row[5]) : undefined),
-      diagnosis: String(row[7] || row[6] || ""),
-      notes: String(row[8] || ""),
-      allergies: String(row[9] || row[7] || ""),
-      loyaltyPoints: row[10] !== "" ? Number(row[10]) : (row[8] !== "" ? Number(row[8]) : 0),
-      medications: medications,
-      vitals: vitals,
-      scans: scans,
-      isArchived: String(row[14]).toUpperCase() === "TRUE" || String(row[12]).toUpperCase() === "TRUE",
-      archivedDate: row[15] ? String(row[15]) : undefined,
-      archiveReason: row[16] ? String(row[16]) : undefined,
-      lastReminderSent: row[17] ? String(row[17]) : undefined,
-      createdAt: row[18] ? String(row[18]) : (row[13] ? String(row[13]) : new Date().toISOString())
-    });
-  }
-
-  return patients;
-}
-
-/**
- * قراءة كافة المتابعات السريرية
- */
-function getAllFollowUpsFromSheet() {
-  const ss = getSpreadsheet();
-  const sheet = ss.getSheetByName(SHEET_FOLLOWUPS);
-  if (!sheet) return [];
-
-  const rows = sheet.getDataRange().getValues();
-  if (rows.length <= 1) return [];
-
-  const followUps = [];
-  for (let r = 1; r < rows.length; r++) {
-    const row = rows[r];
-    if (!row[0]) continue;
-
-    followUps.push({
-      id: String(row[0]),
-      patientId: String(row[1] || ""),
-      patientName: String(row[2] || ""),
-      phone: String(row[3] || ""),
-      type: String(row[4] || "CHRONIC_INIT"),
-      drug: String(row[5] || ""),
-      startDate: String(row[6] || ""),
-      dueDate: String(row[7] || ""),
-      daysOffset: row[8] !== "" ? Number(row[8]) : 0,
-      adherenceRate: row[9] !== "" ? Number(row[9]) : undefined,
-      systolic: row[10] !== "" ? Number(row[10]) : undefined,
-      diastolic: row[11] !== "" ? Number(row[11]) : undefined,
-      bloodGlucose: row[12] !== "" ? Number(row[12]) : undefined,
-      heartRate: row[13] !== "" ? Number(row[13]) : undefined,
-      milestoneTitle: row[14] ? String(row[14]) : undefined,
-      notes: String(row[15] || row[13] || ""),
-      resolved: String(row[16]).toUpperCase() === "TRUE" || String(row[14]).toUpperCase() === "TRUE",
-      resolvedAt: row[17] ? String(row[17]) : undefined,
-      createdAt: row[18] ? String(row[18]) : String(row[6] || new Date().toISOString())
-    });
-  }
-
-  return followUps;
-}
-
-/**
- * حفظ إعدادات النظام في الشيت
- */
-function saveSettingsToSheet(settings) {
-  const ss = getSpreadsheet();
-  const sheet = ss.getSheetByName(SHEET_SETTINGS);
-  if (!sheet) return;
-
-  const keys = Object.keys(settings);
-  const now = new Date().toISOString();
-  const data = sheet.getDataRange().getValues();
-  const keyToRowMap = {};
-
-  for (let r = 1; r < data.length; r++) {
-    const k = data[r][0];
-    if (k) keyToRowMap[k] = r + 1;
-  }
-
-  keys.forEach(k => {
-    const val = typeof settings[k] === 'object' ? JSON.stringify(settings[k]) : String(settings[k]);
-    if (keyToRowMap[k]) {
-      sheet.getRange(keyToRowMap[k], 2, 1, 2).setValues([[val, now]]);
-    } else {
-      sheet.appendRow([k, val, now]);
-    }
-  });
-}
-
-/**
- * قراءة إعدادات النظام من الشيت
- */
-function getSettingsFromSheet() {
-  const ss = getSpreadsheet();
-  const sheet = ss.getSheetByName(SHEET_SETTINGS);
-  if (!sheet) return null;
-
-  const rows = sheet.getDataRange().getValues();
-  if (rows.length <= 1) return null;
-
-  const conf = {};
-  for (let r = 1; r < rows.length; r++) {
-    const k = rows[r][0];
-    const v = rows[r][1];
-    if (k) conf[k] = v;
-  }
-  return conf;
-}
-
-// ============================================================================
-// 6. Google Drive Storage (حفظ صور الروشتات والتحاليل)
-// ============================================================================
-
-/**
- * حفظ ملف Base64 في مجلد Google Drive والحصول على روابط العرض المباشر والتحميل
- */
-function saveBase64ImageToDrive(patientId, fileName, base64Data) {
-  if (!base64Data) {
-    return { fileId: "", fileUrl: "", previewUrl: "", thumbnailUrl: "" };
-  }
-
-  let folder;
-  const folders = DriveApp.getFoldersByName(DRIVE_FOLDER_NAME);
-  if (folders.hasNext()) {
-    folder = folders.next();
-  } else {
-    folder = DriveApp.createFolder(DRIVE_FOLDER_NAME);
-  }
-
-  const cleanBase64 = base64Data.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, "");
-  const decoded = Utilities.base64Decode(cleanBase64);
-  const safeName = (patientId || "Patient") + "_" + Date.now() + "_" + (fileName || "rx_scan.jpg");
-  const blob = Utilities.newBlob(decoded, "image/jpeg", safeName);
-  const file = folder.createFile(blob);
-  
-  // جعل الرابط قابلاً للعرض من قبل أي شخص يمتلك الرابط
-  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-
-  const fileId = file.getId();
-  const fileUrl = file.getUrl();
-  const previewUrl = "https://lh3.googleusercontent.com/d/" + fileId;
-  const thumbnailUrl = "https://drive.google.com/thumbnail?id=" + fileId + "&sz=w2000";
+function rowToPatient(row) {
+  let vitals = [], meds = [], scans = [];
+  try { vitals = row[12] ? JSON.parse(row[12]) : []; } catch (e) {}
+  try { meds = row[13] ? JSON.parse(row[13]) : []; } catch (e) {}
+  try { scans = row[14] ? JSON.parse(row[14]) : []; } catch (e) {}
 
   return {
-    fileId: fileId,
-    fileUrl: fileUrl,
-    previewUrl: previewUrl,
-    thumbnailUrl: thumbnailUrl
+    id: String(row[0] || ""),
+    name: String(row[1] || ""),
+    phone: String(row[2] || ""),
+    age: row[3] !== "" ? Number(row[3]) : undefined,
+    gender: String(row[4] || ""),
+    familyTag: String(row[5] || ""),
+    diagnosis: String(row[6] || ""),
+    loyaltyPoints: row[9] !== "" ? Number(row[9]) : 0,
+    allergies: String(row[10] || ""),
+    notes: String(row[11] || ""),
+    vitals: vitals,
+    medications: meds,
+    scans: scans,
+    isArchived: String(row[15]).toUpperCase() === "TRUE",
+    lastUpdated: String(row[16] || "")
   };
 }
 
-// ============================================================================
-// 7. Audit Logging & Utilities
-// ============================================================================
+/**
+ * حفظ ملف صورة في Google Drive
+ */
+function saveBase64ImageToDrive(patientId, fileName, base64Data) {
+  if (!base64Data) return { fileId: "", fileUrl: "", previewUrl: "", thumbnailUrl: "" };
+  let folder;
+  const folders = DriveApp.getFoldersByName(DRIVE_FOLDER_NAME);
+  folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(DRIVE_FOLDER_NAME);
 
-function logAudit(action, details) {
-  try {
-    const ss = getSpreadsheet();
-    const sheet = ss.getSheetByName(SHEET_AUDIT_LOG);
-    if (sheet) {
-      sheet.appendRow([new Date(), action, details]);
-    }
-  } catch (e) {
-    Logger.log("Audit log failed: " + e.toString());
-  }
-}
+  const clean = base64Data.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, "");
+  const decoded = Utilities.base64Decode(clean);
+  const safeName = (patientId || "Patient") + "_" + Date.now() + "_" + (fileName || "rx.jpg");
+  const blob = Utilities.newBlob(decoded, "image/jpeg", safeName);
+  const file = folder.createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
-function getPatientsCount() {
-  try {
-    const ss = getSpreadsheet();
-    const sheet = ss.getSheetByName(SHEET_PATIENTS);
-    return sheet ? Math.max(0, sheet.getLastRow() - 1) : 0;
-  } catch(e) {
-    return 0;
-  }
-}
-
-function getFollowUpsCount() {
-  try {
-    const ss = getSpreadsheet();
-    const sheet = ss.getSheetByName(SHEET_FOLLOWUPS);
-    return sheet ? Math.max(0, sheet.getLastRow() - 1) : 0;
-  } catch(e) {
-    return 0;
-  }
-}
-
-function jsonResponse(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
+  const fileId = file.getId();
+  return {
+    fileId: fileId,
+    fileUrl: file.getUrl(),
+    previewUrl: "https://lh3.googleusercontent.com/d/" + fileId,
+    thumbnailUrl: "https://drive.google.com/thumbnail?id=" + fileId + "&sz=w2000"
+  };
 }
 
 /**
- * صفحة فحص الحالة التفاعلية عند فتح الرابط في المتصفح
+ * معالجة طلبات GET (Fetch & Ping)
  */
-function renderStatusHtmlPage(ss) {
-  const pCount = getPatientsCount();
-  const fCount = getFollowUpsCount();
-  const html = `
-    <!DOCTYPE html>
-    <html dir="rtl" lang="ar">
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>خادم PharmPulse CRM السحابي متصل بنجاح</title>
-      <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .card { background: #1e293b; border: 1px solid #334155; border-radius: 20px; max-width: 580px; width: 100%; padding: 35px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); text-align: center; }
-        .badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; padding: 6px 16px; border-radius: 999px; font-weight: bold; font-size: 14px; margin-bottom: 20px; }
-        .dot { width: 10px; height: 10px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
-        h1 { font-size: 22px; color: #38bdf8; margin-bottom: 12px; }
-        p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 25px; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
-        .stat-box { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 15px; text-align: center; }
-        .stat-val { font-size: 24px; font-weight: bold; color: #38bdf8; margin-top: 5px; }
-        .stat-lbl { font-size: 12px; color: #64748b; }
-        .details-box { text-align: right; background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 18px; font-family: monospace; font-size: 13px; line-height: 2; color: #cbd5e1; margin-bottom: 20px; }
-        .success-text { color: #38bdf8; font-weight: bold; }
-        .hint { font-size: 12px; color: #64748b; line-height: 1.6; }
-      </style>
-    </head>
-    <body>
-      <div class="card">
-        <div class="badge">
-          <span class="dot"></span>
-          <span>السكريبت يعمل ومتصل بالسحابة بنجاح!</span>
-        </div>
-        <h1>🏥 خادم مزامنة PharmPulse Enterprise</h1>
-        <p>تم نشر خادم Google Apps Script بنجاح، وهو جاهز لاستقبال وإرسال بيانات الصيدلية السريرية لحظياً.</p>
-        
-        <div class="stats-grid">
-          <div class="stat-box">
-            <div class="stat-lbl">المرضى المسجلين</div>
-            <div class="stat-val">${pCount}</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-lbl">المتابعات السريرية</div>
-            <div class="stat-val">${fCount}</div>
-          </div>
-        </div>
+function doGet(e) {
+  const ss = getSpreadsheet();
+  ensureDatabaseSchema(ss);
+  const params = e ? e.parameter : {};
+  const action = (params.action || "FETCH_ALL").toUpperCase();
+  const callback = params.callback;
 
-        <div class="details-box">
-          <div>📊 جدول البيانات: <span class="success-text">${ss ? ss.getName() : "متصل مباشرة"}</span></div>
-          <div>📁 تخزين الصور: <span class="success-text">Google Drive (${DRIVE_FOLDER_NAME})</span></div>
-          <div>⏱️ وقت السيرفر: <span class="success-text">${new Date().toLocaleString()}</span></div>
-          <div>⚡ الحالة: <span class="success-text">جاهز لاستقبال طلبات المزامنة</span></div>
-        </div>
+  let result = { status: "SUCCESS" };
 
-        <div class="hint">
-          قم بنسخ رابط هذه الصفحة وضعه في حقل <b>Google Apps Script Web App URL</b> داخل إعدادات PharmPulse لتفعيل المزامنة التلقائية.
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-  return HtmlService.createHtmlOutput(html)
-    .setTitle("PharmPulse Enterprise Cloud API Online")
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  if (action === "PING") {
+    const pSheet = ss.getSheetByName(SHEET_PATIENTS);
+    const fSheet = ss.getSheetByName(SHEET_FOLLOWUPS);
+    result.counts = {
+      patients: pSheet ? Math.max(0, pSheet.getLastRow() - 1) : 0,
+      followUps: fSheet ? Math.max(0, fSheet.getLastRow() - 1) : 0
+    };
+    result.spreadsheetName = ss.getName();
+    result.version = "4.0.0-Fast";
+  } else {
+    // FETCH_ALL
+    const pSheet = ss.getSheetByName(SHEET_PATIENTS);
+    const fSheet = ss.getSheetByName(SHEET_FOLLOWUPS);
+    const sSheet = ss.getSheetByName(SHEET_SETTINGS);
+
+    const patients = [];
+    if (pSheet && pSheet.getLastRow() > 1) {
+      const pRows = pSheet.getRange(2, 1, pSheet.getLastRow() - 1, 17).getValues();
+      for (let i = 0; i < pRows.length; i++) {
+        if (pRows[i][0]) patients.push(rowToPatient(pRows[i]));
+      }
+    }
+
+    const followUps = [];
+    if (fSheet && fSheet.getLastRow() > 1) {
+      const fRows = fSheet.getRange(2, 1, fSheet.getLastRow() - 1, 10).getValues();
+      for (let i = 0; i < fRows.length; i++) {
+        if (fRows[i][0]) {
+          followUps.push({
+            id: String(fRows[i][0]),
+            patientId: String(fRows[i][1] || ""),
+            patientName: String(fRows[i][2] || ""),
+            phone: String(fRows[i][3] || ""),
+            type: String(fRows[i][4] || ""),
+            drug: String(fRows[i][5] || ""),
+            dueDate: String(fRows[i][6] || ""),
+            resolved: String(fRows[i][7]).toUpperCase() === "RESOLVED" || String(fRows[i][7]).toUpperCase() === "TRUE",
+            notes: String(fRows[i][8] || ""),
+            createdAt: String(fRows[i][9] || "")
+          });
+        }
+      }
+    }
+
+    const settings = {};
+    if (sSheet && sSheet.getLastRow() > 1) {
+      const sRows = sSheet.getRange(2, 1, sSheet.getLastRow() - 1, 2).getValues();
+      for (let i = 0; i < sRows.length; i++) {
+        if (sRows[i][0]) settings[sRows[i][0]] = sRows[i][1];
+      }
+    }
+
+    result.patients = patients;
+    result.followUps = followUps;
+    result.settings = settings;
+  }
+
+  const output = JSON.stringify(result);
+  if (callback) {
+    return ContentService.createTextOutput(callback + "(" + output + ");").setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService.createTextOutput(output).setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * معالجة طلبات POST (Save, Upload & Sync)
+ */
+function doPost(e) {
+  const ss = getSpreadsheet();
+  ensureDatabaseSchema(ss);
+  let body = {};
+  try {
+    body = JSON.parse(e.postData.contents);
+  } catch (err) {
+    body = e.parameter || {};
+  }
+
+  const action = (body.action || "SYNC_UPSTREAM").toUpperCase();
+  const now = new Date().toISOString();
+
+  if (action === "UPLOAD_SCAN") {
+    const uploadRes = saveBase64ImageToDrive(body.patientId, body.title, body.base64Data);
+    return ContentService.createTextOutput(JSON.stringify({ status: "SUCCESS", ...uploadRes })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  if (action === "SAVE_PATIENT") {
+    const pSheet = ss.getSheetByName(SHEET_PATIENTS);
+    const p = body.patient;
+    if (p && p.id && pSheet) {
+      const data = pSheet.getDataRange().getValues();
+      let foundRow = -1;
+      for (let r = 1; r < data.length; r++) {
+        if (String(data[r][0]) === String(p.id)) {
+          foundRow = r + 1;
+          break;
+        }
+      }
+      const rowVals = patientToRow(p, now);
+      if (foundRow > 0) {
+        pSheet.getRange(foundRow, 1, 1, rowVals.length).setValues([rowVals]);
+      } else {
+        pSheet.appendRow(rowVals);
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({ status: "SUCCESS" })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  if (action === "DELETE_PATIENT") {
+    const pid = String(body.patientId || "");
+    const pSheet = ss.getSheetByName(SHEET_PATIENTS);
+    const fSheet = ss.getSheetByName(SHEET_FOLLOWUPS);
+    if (pid === "ALL") {
+      if (pSheet && pSheet.getLastRow() > 1) pSheet.deleteRows(2, pSheet.getLastRow() - 1);
+      if (fSheet && fSheet.getLastRow() > 1) fSheet.deleteRows(2, fSheet.getLastRow() - 1);
+    } else if (pSheet) {
+      const data = pSheet.getDataRange().getValues();
+      for (let r = data.length - 1; r >= 1; r--) {
+        if (String(data[r][0]) === pid) pSheet.deleteRow(r + 1);
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({ status: "SUCCESS" })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  if (action === "CLEAR_DATABASE") {
+    const pSheet = ss.getSheetByName(SHEET_PATIENTS);
+    const fSheet = ss.getSheetByName(SHEET_FOLLOWUPS);
+    if (pSheet && pSheet.getLastRow() > 1) pSheet.deleteRows(2, pSheet.getLastRow() - 1);
+    if (fSheet && fSheet.getLastRow() > 1) fSheet.deleteRows(2, fSheet.getLastRow() - 1);
+    return ContentService.createTextOutput(JSON.stringify({ status: "SUCCESS" })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // SYNC_UPSTREAM (Batch Sync)
+  if (body.patients && Array.isArray(body.patients)) {
+    const pSheet = ss.getSheetByName(SHEET_PATIENTS);
+    if (pSheet) {
+      if (pSheet.getLastRow() > 1) pSheet.deleteRows(2, pSheet.getLastRow() - 1);
+      if (body.patients.length > 0) {
+        const rows = body.patients.map(function(p) { return patientToRow(p, now); });
+        pSheet.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
+      }
+    }
+  }
+
+  if (body.followUps && Array.isArray(body.followUps)) {
+    const fSheet = ss.getSheetByName(SHEET_FOLLOWUPS);
+    if (fSheet) {
+      if (fSheet.getLastRow() > 1) fSheet.deleteRows(2, fSheet.getLastRow() - 1);
+      if (body.followUps.length > 0) {
+        const fRows = body.followUps.map(function(f) {
+          return [
+            f.id || "",
+            f.patientId || "",
+            f.patientName || "",
+            f.phone || "",
+            f.type || "",
+            f.drug || "",
+            f.dueDate || "",
+            f.resolved ? "RESOLVED" : "PENDING",
+            f.notes || "",
+            f.createdAt || now
+          ];
+        });
+        fSheet.getRange(2, 1, fRows.length, fRows[0].length).setValues(fRows);
+      }
+    }
+  }
+
+  if (body.settings && typeof body.settings === "object") {
+    const sSheet = ss.getSheetByName(SHEET_SETTINGS);
+    if (sSheet) {
+      const keys = Object.keys(body.settings);
+      keys.forEach(function(k) {
+        const val = typeof body.settings[k] === "object" ? JSON.stringify(body.settings[k]) : String(body.settings[k]);
+        sSheet.appendRow([k, val, now]);
+      });
+    }
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({ status: "SUCCESS" })).setMimeType(ContentService.MimeType.JSON);
 }

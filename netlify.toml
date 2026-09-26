@@ -1,0 +1,21 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+# Rewrite API routes to Netlify Serverless Functions
+[[redirects]]
+  from = "/api/ai/audit-regimen"
+  to = "/.netlify/functions/audit-regimen"
+  status = 200
+
+[[redirects]]
+  from = "/api/ai/compose-counseling"
+  to = "/.netlify/functions/compose-counseling"
+  status = 200
+
+# Fallback for Single Page Application routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

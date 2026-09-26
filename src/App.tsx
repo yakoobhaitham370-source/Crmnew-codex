@@ -5,7 +5,6 @@ import { DashboardView } from './components/views/DashboardView';
 import { PatientsView } from './components/views/PatientsView';
 import { FollowUpView } from './components/views/FollowUpView';
 import { TimelineView } from './components/views/TimelineView';
-import { SafetyRadarView } from './components/views/SafetyRadarView';
 import { InventoryForecastView } from './components/views/InventoryForecastView';
 import { ReportsView } from './components/views/ReportsView';
 import { ArchiveView } from './components/views/ArchiveView';
@@ -21,7 +20,6 @@ import { Patient, FollowUpEntry, Settings, HouseholdMemberAlignment } from './ty
 import { INITIAL_PATIENTS, INITIAL_FOLLOW_UPS } from './data/mockPatients';
 import { calculateDaysRemaining, formatYMD, filterPatientsByQuery } from './utils/pharmacyCalculations';
 import { useDebounce } from './utils/useDebounce';
-import { evaluateClinicalSafetyRadar } from './data/drugDatabase';
 import {
   syncPushToGoogleSheet,
   fetchFromGoogleSheet,
@@ -31,6 +29,7 @@ import {
   saveFollowUpToGoogleSheet,
   clearGoogleSheetDatabase,
 } from './services/apiService';
+import { enrichPatientScans, saveScanImage } from './utils/scanStorage';
 
 const DEFAULT_SETTINGS: Settings = {
   pharmacyName: 'صيدلية النبض السريرية',
@@ -159,11 +158,41 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // Sync state to LocalStorage
+  // Hydrate all patient scans from IndexedDB on initial mount
+  useEffect(() => {
+    let active = true;
+    const hydrateAllScans = async () => {
+      try {
+        const enrichedList = await Promise.all(
+          patients.map(p => (p.scans && p.scans.length > 0 ? enrichPatientScans(p) : p))
+        );
+        if (active) {
+          setPatients(enrichedList);
+        }
+      } catch (err) {
+        console.warn('Scan hydration error:', err);
+      }
+    };
+    hydrateAllScans();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Sync state to LocalStorage (sanitizes out heavy base64 to avoid browser 5MB quota error)
   useEffect(() => {
     try {
-      localStorage.setItem('crm_cache_data', JSON.stringify(patients));
-    } catch (e) {}
+      const sanitized = patients.map(p => ({
+        ...p,
+        scans: (p.scans || []).map(s => {
+          const { dataUrl, ...rest } = s;
+          return rest;
+        }),
+      }));
+      localStorage.setItem('crm_cache_data', JSON.stringify(sanitized));
+    } catch (e) {
+      console.warn('localStorage save warning:', e);
+    }
   }, [patients]);
 
   useEffect(() => {
@@ -320,7 +349,7 @@ export default function App() {
   }, [settings.gasUrl, handleSheetSync]);
 
   // Compute navigation badges
-  const { dueRefillsCount, activeFollowUpsCount, criticalSafetyCount } = useMemo(() => {
+  const { dueRefillsCount, activeFollowUpsCount } = useMemo(() => {
     let due = 0;
     const activePts = patients.filter(p => !p.isArchived);
 
@@ -334,16 +363,9 @@ export default function App() {
 
     const activeFUs = followUps.filter(f => !f.resolved).length;
 
-    let critSafety = 0;
-    activePts.forEach(p => {
-      const alerts = evaluateClinicalSafetyRadar(p.medications || []);
-      if (alerts.some(a => a.type === 'danger')) critSafety++;
-    });
-
     return {
       dueRefillsCount: due,
       activeFollowUpsCount: activeFUs,
-      criticalSafetyCount: critSafety,
     };
   }, [patients, followUps]);
 
@@ -765,7 +787,6 @@ export default function App() {
         onSelectView={setActiveView}
         dueRefillsCount={dueRefillsCount}
         activeFollowUpsCount={activeFollowUpsCount}
-        criticalSafetyCount={criticalSafetyCount}
         lang={lang}
       />
 
@@ -823,15 +844,6 @@ export default function App() {
             patients={patients}
             lang={lang}
             onOpenRefillModal={handleOpenRefillModal}
-            onOpenPatientModal={handleOpenPatientModal}
-          />
-        )}
-
-        {activeView === 'safety' && (
-          <SafetyRadarView
-            patients={patients}
-            lang={lang}
-            onShowToast={showToast}
             onOpenPatientModal={handleOpenPatientModal}
           />
         )}

@@ -1,103 +1,5 @@
 import { Patient, FollowUpEntry } from '../types/pharmacy';
 
-export async function auditRegimenWithAI(patientData: {
-  patientName: string;
-  age?: number;
-  gender?: string;
-  allergies?: string;
-  medicalHistory?: string;
-  medications: any[];
-  vitals?: any[];
-}) {
-  try {
-    const res = await fetch('/api/ai/audit-regimen', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patientData),
-    });
-    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-    return await res.json();
-  } catch (err: any) {
-    console.warn('AI Audit Regimen fallback:', err);
-    return {
-      success: false,
-      error: err.message,
-    };
-  }
-}
-
-export async function extractPrescriptionWithAI(imageBase64: string, rawText?: string) {
-  try {
-    const res = await fetch('/api/ai/extract-prescription', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageBase64, rawText }),
-    });
-    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-    return await res.json();
-  } catch (err: any) {
-    console.warn('AI Extract Prescription fallback:', err);
-    return {
-      success: false,
-      error: err.message,
-    };
-  }
-}
-
-export async function generateSmartCounselingMessage(params: {
-  patientName: string;
-  pharmacyName: string;
-  medications: any[];
-  channel: 'whatsapp' | 'sms';
-  lang: 'ar' | 'en';
-  goal: string;
-}) {
-  try {
-    const res = await fetch('/api/ai/generate-counseling', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params),
-    });
-    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-    return await res.json();
-  } catch (err: any) {
-    console.warn('AI Counseling fallback:', err);
-    return {
-      success: false,
-      error: err.message,
-    };
-  }
-}
-
-export async function searchClinicalGroundingWithAI(params: {
-  query: string;
-  drugName?: string;
-  patientContext?: any;
-}): Promise<{
-  success: boolean;
-  text?: string;
-  sources?: { title: string; uri: string }[];
-  searchQueries?: string[];
-  error?: string;
-}> {
-  try {
-    const res = await fetch('/api/ai/live-clinical-search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params),
-    });
-    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-    return await res.json();
-  } catch (err: any) {
-    console.warn('Live Clinical Search fallback:', err);
-    return {
-      success: false,
-      error: err.message,
-      sources: [],
-    };
-  }
-}
-
 export interface GasUrlValidationResult {
   isValid: boolean;
   normalizedUrl: string;
@@ -126,7 +28,7 @@ export function validateGasUrl(rawUrl: string): GasUrlValidationResult {
       isValid: false,
       normalizedUrl: url,
       error: 'الرابط المدخل هو رابط جدول Google Sheets نفسه وليس رابط تطبيق الويب (Web App)!',
-      tip: 'افتح الشيت > اضغط على الامتدادات (Extensions) > Apps Script > ثم في أعلى اليمين اضغط نشر (Deploy) > نشر جديد (New deployment) > تطبيق ويب (Web app) > انسخ الرابط.',
+      tip: 'افتح الشيت > اضغط على الامتدادات (Extensions) > Apps Script > ثم في أعلى اليمين اضغط نشر (Deploy) > تطبيق ويب (Web app) > انسخ الرابط.',
     };
   }
 
@@ -202,7 +104,7 @@ async function callGasApi(
   const method = options.method || 'POST';
   const timeoutMs = options.timeoutMs || 8000;
 
-  // 1. Try server proxy route first (zero-CORS, fast redirect following, takes ~300ms)
+  // 1. Try server proxy route first if available
   try {
     const proxyController = new AbortController();
     const proxyTimeout = setTimeout(() => proxyController.abort(), timeoutMs);
@@ -226,7 +128,6 @@ async function callGasApi(
     }
   } catch (proxyErr) {
     // If backend proxy is not accessible, fall back to browser direct/JSONP
-    console.debug('GAS proxy bypassed or unavailable, using browser transport:', proxyErr);
   }
 
   // 2. Direct browser fallback
@@ -360,7 +261,6 @@ export async function uploadScanImageToDrive(
 function sanitizePatientForSheet(patient: Patient): Patient {
   if (!patient.scans || patient.scans.length === 0) return patient;
   const cleanScans = patient.scans.map(s => {
-    // Keep previewUrl, driveUrl, title, date, id, fileSize, omit raw dataUrl
     const { dataUrl, ...rest } = s;
     return rest;
   });
@@ -497,22 +397,17 @@ export async function clearGoogleSheetDatabase(
   if (!gasUrl) return { success: false, message: 'NO_GAS_URL' };
   const cleanUrl = gasUrl.trim();
 
-  // 1. Try to discover any remote patient IDs currently on the sheet
   let discoveredIds: string[] = [];
   try {
     const upstream = await fetchFromGoogleSheet(cleanUrl);
     if (upstream && Array.isArray(upstream.patients)) {
       discoveredIds = upstream.patients.map(p => p.id).filter(Boolean);
     }
-  } catch (e) {
-    console.debug('Discover upstream IDs note:', e);
-  }
+  } catch (e) {}
 
-  // Known demo IDs that might have been synced previously to the user's sheet
   const DEMO_IDS = ['PT-104821', 'PT-104822', 'PT-104823', 'PT-104824', 'PT-106550'];
   const allIds = Array.from(new Set([...knownPatientIds, ...discoveredIds, ...DEMO_IDS]));
 
-  // 2. Send CLEAR_DATABASE action to modern script via POST
   try {
     await callGasApi(cleanUrl, {
       method: 'POST',
@@ -522,38 +417,8 @@ export async function clearGoogleSheetDatabase(
       },
       timeoutMs: 8000,
     });
-  } catch (e) {
-    console.warn('CLEAR_DATABASE POST action error:', e);
-  }
-
-  // 3. Also send CLEAR_DATABASE via GET / JSONP
-  try {
-    await callGasApi(cleanUrl, {
-      method: 'GET',
-      params: {
-        action: 'CLEAR_DATABASE',
-        _t: Date.now().toString(),
-      },
-      timeoutMs: 6000,
-    });
   } catch (e) {}
 
-  // 4. Also send DELETE_PATIENT ALL via POST
-  try {
-    await callGasApi(cleanUrl, {
-      method: 'POST',
-      payload: {
-        action: 'DELETE_PATIENT',
-        patientId: 'ALL',
-        timestamp: new Date().toISOString(),
-      },
-      timeoutMs: 6000,
-    });
-  } catch (e) {
-    console.warn('DELETE_PATIENT ALL error:', e);
-  }
-
-  // 5. Fallback for older script deployments: delete each ID individually
   for (const id of allIds) {
     if (id) {
       try {
@@ -574,7 +439,7 @@ export async function fetchFromGoogleSheet(
   if (!gasUrl) throw new Error('NO_GAS_URL');
   const cleanUrl = gasUrl.trim();
 
-  // Tier 1: Try high-speed server proxy (completes in 300-600ms, zero CORS issues)
+  // Tier 1: Try high-speed server proxy if running
   try {
     const data = await callGasApi(cleanUrl, {
       method: 'GET',
@@ -589,11 +454,9 @@ export async function fetchFromGoogleSheet(
         settings: data.settings || null,
       };
     }
-  } catch (proxyErr) {
-    console.debug('Proxy fetch failed, using direct JSONP:', proxyErr);
-  }
+  } catch (proxyErr) {}
 
-  // Tier 2: Instant JSONP client (works across all browsers and iframes without CORS)
+  // Tier 2: Instant JSONP client (works statically on Netlify, GitHub Pages, etc.)
   return fetchFromGoogleSheetJSONP(cleanUrl, { action: 'FETCH_ALL' });
 }
 
@@ -653,4 +516,3 @@ export function fetchFromGoogleSheetJSONP(
     document.body.appendChild(script);
   });
 }
-

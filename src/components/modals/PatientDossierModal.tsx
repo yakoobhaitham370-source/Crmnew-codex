@@ -40,6 +40,144 @@ import {
 import { uploadScanImageToDrive } from '../../services/apiService';
 import { PatientAdherenceVitalsChart } from '../charts/PatientAdherenceVitalsChart';
 import { ImagePreviewModal } from './ImagePreviewModal';
+import { saveScanImage, getScanImage, enrichPatientScans, deleteScanImage } from '../../utils/scanStorage';
+
+// Internal Scan Card subcomponent with reliable IndexedDB + Google Drive resolution
+const ScanCard: React.FC<{
+  scan: LabScan;
+  lang: 'ar' | 'en';
+  onPreview: (scan: LabScan) => void;
+  onDelete: (scanId: string) => void;
+}> = ({ scan, lang, onPreview, onDelete }) => {
+  const [imgSrc, setImgSrc] = useState<string>(scan.dataUrl || scan.previewUrl || scan.thumbnailUrl || scan.driveUrl || '');
+
+  useEffect(() => {
+    let active = true;
+    if (scan.dataUrl && scan.dataUrl.length > 50) {
+      setImgSrc(scan.dataUrl);
+      return;
+    }
+
+    if (scan.id) {
+      getScanImage(scan.id).then(cached => {
+        if (active && cached && cached.length > 50) {
+          setImgSrc(cached);
+        }
+      });
+    }
+
+    if (scan.previewUrl) {
+      setImgSrc(scan.previewUrl);
+    } else if (scan.fileId) {
+      setImgSrc(`https://lh3.googleusercontent.com/d/${scan.fileId}`);
+    } else if (scan.driveUrl) {
+      const match = scan.driveUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        setImgSrc(`https://lh3.googleusercontent.com/d/${match[1]}`);
+      }
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [scan]);
+
+  return (
+    <div className="border border-[#383838] hover:border-blue-500/60 rounded-xl overflow-hidden bg-[#141414] group relative transition-all shadow-md flex flex-col">
+      {/* Image Thumbnail Container */}
+      <div
+        onClick={() => onPreview({ ...scan, dataUrl: imgSrc || scan.dataUrl })}
+        className="relative h-40 bg-[#0a0a0a] cursor-pointer overflow-hidden flex items-center justify-center group"
+        title={lang === 'ar' ? 'اضغط للمعاينة بالدقة الكاملة' : 'Click for full-res preview'}
+      >
+        {imgSrc ? (
+          <img
+            src={imgSrc}
+            alt={scan.title || 'Scan'}
+            onError={() => {
+              if (scan.fileId && !imgSrc.includes('thumbnail')) {
+                setImgSrc(`https://drive.google.com/thumbnail?id=${scan.fileId}&sz=w2000`);
+              }
+            }}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center gap-1.5 text-neutral-500">
+            <ImageIcon className="w-8 h-8 text-neutral-600" />
+            <span className="text-[10px] text-neutral-500">{lang === 'ar' ? 'انقر للمعاينة' : 'Click to inspect'}</span>
+          </div>
+        )}
+
+        {/* Hover Overlay */}
+        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+          <span className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg">
+            <ZoomIn className="w-4 h-4" />
+            <span>{lang === 'ar' ? 'معاينة بالدقة الكاملة' : 'Full Preview'}</span>
+          </span>
+        </div>
+
+        {/* Storage badge */}
+        <div className="absolute top-2 left-2">
+          {scan.driveUrl ? (
+            <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-950/80 text-emerald-300 border border-emerald-800/80 font-bold backdrop-blur-sm flex items-center gap-1">
+              <span>☁️ Drive</span>
+            </span>
+          ) : (
+            <span className="text-[10px] px-2 py-0.5 rounded-md bg-blue-950/80 text-blue-300 border border-blue-800/80 font-bold backdrop-blur-sm flex items-center gap-1">
+              <span>💾 Full Res</span>
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Card Footer Details */}
+      <div className="p-2.5 bg-[#1a1a1a] border-t border-[#292929] flex-1 flex flex-col justify-between gap-2">
+        <div>
+          <div className="font-bold text-xs text-neutral-200 truncate" title={scan.title}>
+            {scan.title || (lang === 'ar' ? 'وصفة طبية' : 'Prescription Scan')}
+          </div>
+          <div className="text-[10px] text-neutral-400 flex items-center justify-between mt-1">
+            <span>{scan.date}</span>
+            {scan.fileSize && <span className="font-mono text-neutral-500">{scan.fileSize}</span>}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-1 border-t border-[#2a2a2a] gap-1">
+          <button
+            type="button"
+            onClick={() => onPreview({ ...scan, dataUrl: imgSrc || scan.dataUrl })}
+            className="text-[11px] font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1"
+          >
+            <ZoomIn className="w-3.5 h-3.5" />
+            <span>{lang === 'ar' ? 'معاينة' : 'Preview'}</span>
+          </button>
+
+          <div className="flex items-center gap-1">
+            {scan.driveUrl && (
+              <a
+                href={scan.driveUrl}
+                target="_blank"
+                rel="noreferrer"
+                title={lang === 'ar' ? 'فتح في Google Drive' : 'Open in Google Drive'}
+                className="p-1 rounded text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={() => onDelete(scan.id!)}
+              title={lang === 'ar' ? 'حذف الصورة' : 'Delete'}
+              className="p-1 rounded text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface PatientDossierModalProps {
   isOpen: boolean;
@@ -117,6 +255,16 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
         medications: patient.medications ? [...patient.medications] : [],
         vitals: patient.vitals ? [...patient.vitals] : [],
         scans: patient.scans ? [...patient.scans] : [],
+      });
+
+      // Hydrate all scans from IndexedDB in background
+      enrichPatientScans(patient).then(enriched => {
+        if (enriched && enriched.scans) {
+          setFormData(prev => ({
+            ...prev,
+            scans: enriched.scans,
+          }));
+        }
       });
     } else {
       setFormData({
@@ -273,7 +421,14 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
         ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` 
         : `${Math.round(file.size / 1024)} KB`;
 
-      // Create initial local scan with full resolution
+      // 1. Immediately save to IndexedDB (virtually unlimited client-side storage quota)
+      await saveScanImage(scanId, base64, {
+        title: file.name,
+        patientId: formData.id,
+        size: fileSizeStr,
+      });
+
+      // 2. Create initial local scan with full resolution
       const newScan: LabScan = {
         id: scanId,
         date: new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US'),
@@ -296,7 +451,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
         'success'
       );
 
-      // Asynchronously upload full-resolution pure image to Google Drive if gasUrl is set
+      // 3. Asynchronously upload full-resolution pure image to Google Drive if gasUrl is set
       if (gasUrl) {
         try {
           const driveRes = await uploadScanImageToDrive(
@@ -338,7 +493,8 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
     reader.readAsDataURL(file);
   };
 
-  const handleDeleteScan = (scanId: string) => {
+  const handleDeleteScan = async (scanId: string) => {
+    await deleteScanImage(scanId);
     setFormData(prev => ({
       ...prev,
       scans: (prev.scans || []).filter(s => s.id !== scanId),
@@ -906,98 +1062,15 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
-                    {(formData.scans || []).map((s, i) => {
-                      const displaySrc = s.dataUrl || s.previewUrl || s.thumbnailUrl || s.driveUrl || '';
-                      return (
-                        <div
-                          key={s.id || i}
-                          className="border border-[#383838] hover:border-blue-500/60 rounded-xl overflow-hidden bg-[#141414] group relative transition-all shadow-md flex flex-col"
-                        >
-                          {/* Image Thumbnail Container */}
-                          <div
-                            onClick={() => setPreviewingScan(s)}
-                            className="relative h-40 bg-[#0a0a0a] cursor-pointer overflow-hidden flex items-center justify-center group"
-                            title={lang === 'ar' ? 'اضغط للمعاينة بالدقة الكاملة' : 'Click for full-res preview'}
-                          >
-                            {displaySrc ? (
-                              <img
-                                src={displaySrc}
-                                alt={s.title || 'Scan'}
-                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                              />
-                            ) : (
-                              <ImageIcon className="w-8 h-8 text-neutral-600" />
-                            )}
-                            {/* Hover Overlay */}
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                              <span className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg">
-                                <ZoomIn className="w-4 h-4" />
-                                <span>{lang === 'ar' ? 'معاينة بالدقة الكاملة' : 'Full Preview'}</span>
-                              </span>
-                            </div>
-
-                            {/* Storage badge */}
-                            <div className="absolute top-2 left-2">
-                              {s.driveUrl ? (
-                                <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-950/80 text-emerald-300 border border-emerald-800/80 font-bold backdrop-blur-sm flex items-center gap-1">
-                                  <span>☁️ Drive</span>
-                                </span>
-                              ) : (
-                                <span className="text-[10px] px-2 py-0.5 rounded-md bg-blue-950/80 text-blue-300 border border-blue-800/80 font-bold backdrop-blur-sm flex items-center gap-1">
-                                  <span>💾 Full Res</span>
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Card Footer Details */}
-                          <div className="p-2.5 bg-[#1a1a1a] border-t border-[#292929] flex-1 flex flex-col justify-between gap-2">
-                            <div>
-                              <div className="font-bold text-xs text-neutral-200 truncate" title={s.title}>
-                                {s.title || (lang === 'ar' ? 'وصفة طبية' : 'Prescription Scan')}
-                              </div>
-                              <div className="text-[10px] text-neutral-400 flex items-center justify-between mt-1">
-                                <span>{s.date}</span>
-                                {s.fileSize && <span className="font-mono text-neutral-500">{s.fileSize}</span>}
-                              </div>
-                            </div>
-
-                            <div className="flex items-center justify-between pt-1 border-t border-[#2a2a2a] gap-1">
-                              <button
-                                type="button"
-                                onClick={() => setPreviewingScan(s)}
-                                className="text-[11px] font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1"
-                              >
-                                <ZoomIn className="w-3.5 h-3.5" />
-                                <span>{lang === 'ar' ? 'معاينة' : 'Preview'}</span>
-                              </button>
-
-                              <div className="flex items-center gap-1">
-                                {s.driveUrl && (
-                                  <a
-                                    href={s.driveUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    title={lang === 'ar' ? 'فتح في Google Drive' : 'Open in Google Drive'}
-                                    className="p-1 rounded text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
-                                  >
-                                    <ExternalLink className="w-3.5 h-3.5" />
-                                  </a>
-                                )}
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteScan(s.id!)}
-                                  title={lang === 'ar' ? 'حذف الصورة' : 'Delete'}
-                                  className="p-1 rounded text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 transition-colors"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {(formData.scans || []).map((s, i) => (
+                      <ScanCard
+                        key={s.id || i}
+                        scan={s}
+                        lang={lang}
+                        onPreview={setPreviewingScan}
+                        onDelete={handleDeleteScan}
+                      />
+                    ))}
                   </div>
                 )}
               </div>
