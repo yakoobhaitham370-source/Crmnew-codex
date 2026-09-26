@@ -1,39 +1,32 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   FileText,
   X,
-  Users,
-  AlertTriangle,
   HeartPulse,
   Image as ImageIcon,
   Calendar,
   Printer,
   Copy,
   MessageSquare,
-  Send,
   Plus,
   Trash2,
   ExternalLink,
   ShieldAlert,
   ZoomIn,
-  Download,
   UploadCloud,
   CheckCircle2,
   HardDrive,
+  User,
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { Patient, Medication, VitalsEntry, LabScan, FollowUpEntry, RefillRecord } from '../../types/pharmacy';
 import { MedicationRefillTimeline } from '../medications/MedicationRefillTimeline';
 import {
-  evaluateClinicalSafetyRadar,
-  getEvidenceBasedCompanion,
   getDrugScheduleSuggestion,
-  resolveGenericDrug,
 } from '../../data/drugDatabase';
 import {
   formatYMD,
   formatPhoneForWhatsApp,
-  executeUniversalSMS,
   calculatePatientAge,
   generateThermalSlipText,
 } from '../../utils/pharmacyCalculations';
@@ -50,6 +43,7 @@ const ScanCard: React.FC<{
   onDelete: (scanId: string) => void;
 }> = ({ scan, lang, onPreview, onDelete }) => {
   const [imgSrc, setImgSrc] = useState<string>(scan.dataUrl || scan.previewUrl || scan.thumbnailUrl || scan.driveUrl || '');
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -80,30 +74,33 @@ const ScanCard: React.FC<{
     return () => {
       active = false;
     };
-  }, [scan]);
+  }, [scan.id, scan.dataUrl, scan.previewUrl, scan.driveUrl, scan.fileId]);
 
   return (
-    <div className="border border-[#383838] hover:border-blue-500/60 rounded-xl overflow-hidden bg-[#141414] group relative transition-all shadow-md flex flex-col">
+    <div className="border border-[#383838] light:border-neutral-200 hover:border-blue-500/60 rounded-xl overflow-hidden bg-[#141414] light:bg-white group relative transition-all shadow-md flex flex-col">
       {/* Image Thumbnail Container */}
       <div
         onClick={() => onPreview({ ...scan, dataUrl: imgSrc || scan.dataUrl })}
-        className="relative h-40 bg-[#0a0a0a] cursor-pointer overflow-hidden flex items-center justify-center group"
+        className="relative h-40 bg-[#0a0a0a] light:bg-neutral-100 cursor-pointer overflow-hidden flex items-center justify-center group"
         title={lang === 'ar' ? 'اضغط للمعاينة بالدقة الكاملة' : 'Click for full-res preview'}
       >
-        {imgSrc ? (
+        {imgSrc && !hasError ? (
           <img
             src={imgSrc}
             alt={scan.title || 'Scan'}
             onError={() => {
-              if (scan.fileId && !imgSrc.includes('thumbnail')) {
+              if (!hasError && scan.fileId && !imgSrc.includes('thumbnail')) {
                 setImgSrc(`https://drive.google.com/thumbnail?id=${scan.fileId}&sz=w2000`);
+                setHasError(true);
+              } else {
+                setHasError(true);
               }
             }}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="flex flex-col items-center justify-center gap-1.5 text-neutral-500">
-            <ImageIcon className="w-8 h-8 text-neutral-600" />
+            <ImageIcon className="w-8 h-8 text-neutral-600 light:text-neutral-400" />
             <span className="text-[10px] text-neutral-500">{lang === 'ar' ? 'انقر للمعاينة' : 'Click to inspect'}</span>
           </div>
         )}
@@ -131,9 +128,9 @@ const ScanCard: React.FC<{
       </div>
 
       {/* Card Footer Details */}
-      <div className="p-2.5 bg-[#1a1a1a] border-t border-[#292929] flex-1 flex flex-col justify-between gap-2">
+      <div className="p-2.5 bg-[#1a1a1a] light:bg-neutral-50 border-t border-[#292929] light:border-neutral-200 flex-1 flex flex-col justify-between gap-2">
         <div>
-          <div className="font-bold text-xs text-neutral-200 truncate" title={scan.title}>
+          <div className="font-bold text-xs text-neutral-200 light:text-neutral-800 truncate" title={scan.title}>
             {scan.title || (lang === 'ar' ? 'وصفة طبية' : 'Prescription Scan')}
           </div>
           <div className="text-[10px] text-neutral-400 flex items-center justify-between mt-1">
@@ -142,7 +139,7 @@ const ScanCard: React.FC<{
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-1 border-t border-[#2a2a2a] gap-1">
+        <div className="flex items-center justify-between pt-1 border-t border-[#2a2a2a] light:border-neutral-200 gap-1">
           <button
             type="button"
             onClick={() => onPreview({ ...scan, dataUrl: imgSrc || scan.dataUrl })}
@@ -246,71 +243,87 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
   const [previewingScan, setPreviewingScan] = useState<LabScan | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Track loaded patient ID and open state to prevent flickering and re-render loops
+  const lastLoadedPatientIdRef = useRef<string | null>(null);
+  const isCurrentlyOpenRef = useRef<boolean>(false);
+
   useEffect(() => {
-    if (!isOpen) return;
-
-    if (patient) {
-      setFormData({
-        ...patient,
-        medications: patient.medications ? [...patient.medications] : [],
-        vitals: patient.vitals ? [...patient.vitals] : [],
-        scans: patient.scans ? [...patient.scans] : [],
-      });
-
-      // Hydrate all scans from IndexedDB in background
-      enrichPatientScans(patient).then(enriched => {
-        if (enriched && enriched.scans) {
-          setFormData(prev => ({
-            ...prev,
-            scans: enriched.scans,
-          }));
-        }
-      });
-    } else {
-      setFormData({
-        id: 'PT-' + Date.now().toString().slice(-6),
-        name: '',
-        phone: '',
-        dob: '',
-        age: 0,
-        gender: 'M',
-        familyTag: '',
-        loyaltyPoints: 0,
-        allergies: '',
-        notes: '',
-        medications: [
-          {
-            name: '',
-            lastDispenseDate: formatYMD(new Date()),
-            daysSupply: 30,
-            timing: 'morning',
-            mealRelation: 'after_meal',
-          },
-        ],
-        vitals: [],
-        scans: [],
-        createdAt: new Date().toISOString(),
-        isArchived: false,
-      });
+    if (!isOpen) {
+      isCurrentlyOpenRef.current = false;
+      lastLoadedPatientIdRef.current = null;
+      return;
     }
 
-    setActiveTab(initialTab || 'demographics');
-  }, [patient, isOpen, initialTab]);
+    const currentPatientKey = patient?.id || '__NEW_PATIENT__';
+
+    // Only re-initialize form state when modal transitions from closed to open, or target patient changes
+    if (!isCurrentlyOpenRef.current || lastLoadedPatientIdRef.current !== currentPatientKey) {
+      isCurrentlyOpenRef.current = true;
+      lastLoadedPatientIdRef.current = currentPatientKey;
+
+      if (patient) {
+        setFormData({
+          ...patient,
+          medications: patient.medications ? [...patient.medications] : [],
+          vitals: patient.vitals ? [...patient.vitals] : [],
+          scans: patient.scans ? [...patient.scans] : [],
+        });
+
+        // Hydrate all scans from IndexedDB safely without resetting other fields
+        enrichPatientScans(patient).then(enriched => {
+          if (enriched && Array.isArray(enriched.scans) && enriched.scans.length > 0) {
+            setFormData(prev => {
+              if (prev.id !== patient.id) return prev;
+              return {
+                ...prev,
+                scans: enriched.scans,
+              };
+            });
+          }
+        });
+      } else {
+        setFormData({
+          id: 'PT-' + Date.now().toString().slice(-6),
+          name: '',
+          phone: '',
+          dob: '',
+          age: 0,
+          gender: 'M',
+          familyTag: '',
+          loyaltyPoints: 0,
+          allergies: '',
+          notes: '',
+          medications: [
+            {
+              name: '',
+              lastDispenseDate: formatYMD(new Date()),
+              daysSupply: 30,
+              timing: 'morning',
+              mealRelation: 'after_meal',
+            },
+          ],
+          vitals: [],
+          scans: [],
+          createdAt: new Date().toISOString(),
+          isArchived: false,
+        });
+      }
+
+      setActiveTab(initialTab || 'demographics');
+    }
+  }, [isOpen, patient?.id, initialTab]);
 
   // Generate QR Code when thermal slip tab is opened
   useEffect(() => {
     if (activeTab === 'thermal' && formData.name) {
-      const summary = `PATIENT: ${formData.name} | TEL: ${formData.phone} | MEDS: ${(formData.medications || []).map(m => m.name).join(', ')}`;
+      const summary = `PATIENT: ${formData.name} | TEL: ${formData.phone} | MEDS: ${(formData.medications || []).map(m => m.name).filter(Boolean).join(', ')}`;
       QRCode.toDataURL(summary, { margin: 1, width: 140 }, (err, url) => {
         if (!err && url) setQrDataUrl(url);
       });
     }
-  }, [activeTab, formData]);
+  }, [activeTab, formData.name, formData.phone, formData.medications]);
 
   if (!isOpen) return null;
-
-  // Real-time radar alerts
-  const radarAlerts = evaluateClinicalSafetyRadar(formData.medications);
 
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -387,13 +400,13 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
       diastolic: isNaN(diaNum) ? undefined : diaNum,
       sugar: newSugar || '—',
       glucose: isNaN(sugarNum) ? undefined : sugarNum,
-      misc: newMisc || 'قراءة روتينية',
+      misc: newMisc || (lang === 'ar' ? 'قراءة روتينية' : 'Routine Reading'),
       assessment:
         sysNum && sysNum >= 140
-          ? 'ضغط مرتفع (يحتاج متابعة)'
+          ? (lang === 'ar' ? 'ضغط مرتفع (يحتاج متابعة)' : 'High BP (Follow up)')
           : sugarNum && sugarNum >= 180
-          ? 'سكر مرتفع (يحتاج ضبط)'
-          : 'ضمن النطاق المقبول',
+          ? (lang === 'ar' ? 'سكر مرتفع (يحتاج ضبط)' : 'High Glucose (Adjust)')
+          : (lang === 'ar' ? 'ضمن النطاق المقبول' : 'Within normal limits'),
     };
 
     setFormData(prev => ({
@@ -417,11 +430,12 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
     reader.onload = async evt => {
       const base64 = evt.target?.result as string;
       const scanId = 'scan-' + Date.now();
-      const fileSizeStr = file.size > 1024 * 1024 
-        ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` 
-        : `${Math.round(file.size / 1024)} KB`;
+      const fileSizeStr =
+        file.size > 1024 * 1024
+          ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+          : `${Math.round(file.size / 1024)} KB`;
 
-      // 1. Immediately save to IndexedDB (virtually unlimited client-side storage quota)
+      // 1. Immediately save to IndexedDB (virtually unlimited quota)
       await saveScanImage(scanId, base64, {
         title: file.name,
         patientId: formData.id,
@@ -445,9 +459,9 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
 
       setIsUploadingScan(false);
       onShowToast(
-        lang === 'ar' 
-          ? 'تم حفظ صورة الوصفة / التحليل بدقة كاملة' 
-          : 'Full resolution prescription scan saved', 
+        lang === 'ar'
+          ? 'تم حفظ صورة الوصفة / التحليل بدقة كاملة'
+          : 'Full resolution prescription scan saved',
         'success'
       );
 
@@ -527,10 +541,10 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
   const thermalSlipText = generateThermalSlipText(formData, pharmacyName);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/80 backdrop-blur-md animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/80 backdrop-blur-sm">
       <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-2xl max-w-4xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Top Header */}
-        <div className="p-4 bg-[#292929] light:bg-neutral-100 border-b border-[#383838] flex items-center justify-between">
+        <div className="p-4 bg-[#292929] light:bg-neutral-100 border-b border-[#383838] light:border-neutral-200 flex items-center justify-between">
           <div className="font-extrabold text-base text-white light:text-neutral-900 flex items-center gap-2">
             <FileText className="w-5 h-5 text-blue-400" />
             <span>
@@ -543,14 +557,14 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+            className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 light:hover:bg-neutral-200 light:hover:text-neutral-900 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Dossier Tabs */}
-        <div className="bg-[#191919] light:bg-neutral-200 border-b border-[#383838] px-4 flex items-center gap-1 overflow-x-auto text-xs font-semibold">
+        <div className="bg-[#191919] light:bg-neutral-200 border-b border-[#383838] light:border-neutral-300 px-4 flex items-center gap-1 overflow-x-auto text-xs font-semibold">
           {[
             { id: 'demographics', labelAr: '1. البيانات والعائلة', labelEn: '1. Demographics' },
             { id: 'regimen', labelAr: '2. الأدوية ومخطط الصرف ⏱️', labelEn: '2. Regimen & Refill Timelines ⏱️' },
@@ -565,8 +579,8 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
               onClick={() => setActiveTab(tab.id)}
               className={`py-3 px-3 border-b-2 whitespace-nowrap transition-colors ${
                 activeTab === tab.id
-                  ? 'border-[#479ef5] text-[#479ef5] bg-[#292929]/40 font-bold'
-                  : 'border-transparent text-neutral-400 hover:text-white'
+                  ? 'border-[#479ef5] text-[#479ef5] bg-[#292929]/40 light:bg-neutral-100 font-bold'
+                  : 'border-transparent text-neutral-400 light:text-neutral-600 hover:text-white light:hover:text-neutral-900'
               }`}
             >
               {lang === 'ar' ? tab.labelAr : tab.labelEn}
@@ -595,13 +609,13 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
             <div className="space-y-4">
               {/* Family Alignment Notification Banner */}
               {formData.familyTag && (
-                <div className="bg-blue-950/40 border border-blue-600/50 p-3.5 rounded-xl flex items-center justify-between gap-3">
+                <div className="bg-blue-950/40 light:bg-blue-50 border border-blue-600/50 light:border-blue-300 p-3.5 rounded-xl flex items-center justify-between gap-3">
                   <div>
-                    <div className="font-bold text-sm text-blue-300 flex items-center gap-1.5">
+                    <div className="font-bold text-sm text-blue-300 light:text-blue-700 flex items-center gap-1.5">
                       <span>👨‍👩‍👧‍👦</span>
                       <span>{lang === 'ar' ? 'المريض مرتبط بعائلة:' : 'Linked Family:'} {formData.familyTag}</span>
                     </div>
-                    <div className="text-[11px] text-neutral-300 mt-0.5">
+                    <div className="text-[11px] text-neutral-300 light:text-neutral-600 mt-0.5">
                       {lang === 'ar'
                         ? 'يمكنك توحيد مواعيد صرف وصيدلية أفراد العائلة في رحلة واحدة وحساب الحبات الناقصة.'
                         : 'Coordinate refills for the entire family in one visit using bridge dose calculation.'}
@@ -629,8 +643,8 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                     type="text"
                     value={formData.name}
                     onChange={e => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="مثال: أحمد عبد الله الجبوري"
-                    className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500 font-semibold"
+                    placeholder={lang === 'ar' ? 'مثال: أحمد عبد الله الجبوري' : 'e.g. John Doe'}
+                    className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500 font-semibold"
                     required
                   />
                 </div>
@@ -643,8 +657,8 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                     type="tel"
                     value={formData.phone}
                     onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="07700000000 أو 9647700000000"
-                    className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500 font-mono"
+                    placeholder="07700000000 / +964..."
+                    className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500 font-mono"
                     required
                   />
                 </div>
@@ -657,10 +671,10 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                     type="date"
                     value={formData.dob || ''}
                     onChange={handleDobChange}
-                    className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500 font-mono"
+                    className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500 font-mono"
                   />
                   {formData.age ? (
-                    <span className="text-[11px] text-blue-400 font-semibold">
+                    <span className="text-[11px] text-blue-400 light:text-blue-600 font-semibold">
                       {lang === 'ar' ? `العمر المحسوب: ${formData.age} سنة` : `Age: ${formData.age} years`}
                     </span>
                   ) : null}
@@ -673,7 +687,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                   <select
                     value={formData.gender || 'M'}
                     onChange={e => setFormData({ ...formData, gender: e.target.value as any })}
-                    className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500"
+                    className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500"
                   >
                     <option value="M">{lang === 'ar' ? 'ذكر' : 'Male'}</option>
                     <option value="F">{lang === 'ar' ? 'أنثى' : 'Female'}</option>
@@ -688,8 +702,8 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                     type="text"
                     value={formData.familyTag || ''}
                     onChange={e => setFormData({ ...formData, familyTag: e.target.value })}
-                    placeholder="مثال: عائلة_الجبوري"
-                    className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500"
+                    placeholder={lang === 'ar' ? 'مثال: عائلة_الجبوري' : 'e.g. Smith_Family'}
+                    className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500"
                   />
                 </div>
 
@@ -702,13 +716,13 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                     min={0}
                     value={formData.loyaltyPoints || 0}
                     onChange={e => setFormData({ ...formData, loyaltyPoints: parseInt(e.target.value, 10) || 0 })}
-                    className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500 font-mono font-bold"
+                    className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500 font-mono font-bold"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-rose-400">
+                <label className="font-semibold text-rose-400 light:text-rose-600">
                   {lang === 'ar' ? 'الحساسيات الدوائية المعروفة (Allergies)' : 'Known Drug Allergies'}
                 </label>
                 <input
@@ -716,7 +730,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                   value={formData.allergies || ''}
                   onChange={e => setFormData({ ...formData, allergies: e.target.value })}
                   placeholder="مثال: Penicillin, Sulfa, Aspirin..."
-                  className="w-full bg-[#141414] light:bg-neutral-50 border border-rose-900/50 text-rose-300 rounded-lg p-2.5 outline-none focus:border-rose-500"
+                  className="w-full bg-[#141414] light:bg-neutral-50 border border-rose-900/50 light:border-rose-300 text-rose-300 light:text-rose-700 rounded-lg p-2.5 outline-none focus:border-rose-500"
                 />
               </div>
 
@@ -728,71 +742,20 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                   rows={3}
                   value={formData.notes || ''}
                   onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="تاريخ الإصابة، أمراض مصاحبة (فشل كلوي، ذبحة صدرية، ربو)..."
-                  className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500"
+                  placeholder={lang === 'ar' ? 'تاريخ الإصابة، أمراض مصاحبة (ضغط، سكري، كلى)...' : 'Medical history, chronic conditions, special notes...'}
+                  className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500"
                 />
               </div>
             </div>
           )}
 
-          {/* TAB 2: REGIMEN & SAFETY */}
+          {/* TAB 2: REGIMEN & REFILL TIMELINES */}
           {activeTab === 'regimen' && (
             <div className="space-y-4">
-              {/* Radar Alerts */}
-              {radarAlerts.length > 0 && (
-                <div className="space-y-2">
-                  {radarAlerts.map((a, i) => (
-                    <div
-                      key={i}
-                      className="p-3.5 rounded-xl bg-rose-950/40 border-2 border-rose-600 text-rose-200 text-xs space-y-1"
-                    >
-                      <div className="font-extrabold flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 text-rose-400" />
-                        <span>{a.title}</span>
-                      </div>
-                      <div>{a.detail}</div>
-                      {a.recommendation && (
-                        <div className="text-emerald-400 font-bold text-[11px] mt-1">
-                          الإجراء المقترح: {a.recommendation}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Evidence Based Companions */}
-              <div className="space-y-2">
-                {formData.medications.map((m, idx) => {
-                  const comp = getEvidenceBasedCompanion(resolveGenericDrug(m.name));
-                  if (!comp) return null;
-                  return (
-                    <div
-                      key={idx}
-                      className="p-3 rounded-lg bg-blue-950/30 border border-blue-600/40 flex items-center justify-between gap-3"
-                    >
-                      <div>
-                        <div className="font-bold text-blue-300 text-xs">
-                          💡 مكمل سريري مقترح لـ ({m.name}): {comp.title}
-                        </div>
-                        <div className="text-[11px] text-neutral-300 mt-0.5">{comp.rationale}</div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => onShowToast(lang === 'ar' ? 'تم تدوين التوصية للمريض' : 'Companion noted', 'info')}
-                        className="px-2.5 py-1 rounded bg-blue-600 text-white font-bold text-[11px] shrink-0"
-                      >
-                        إضافة للتوصية
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-
               {/* Meds List header */}
-              <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center justify-between pt-1">
                 <span className="font-bold text-sm text-white light:text-neutral-900">
-                  {lang === 'ar' ? 'الأدوية المزمنة المقررة:' : 'Prescribed Chronic Regimen:'}
+                  {lang === 'ar' ? 'الأدوية المزمنة المقررة ومخطط الصرف:' : 'Prescribed Chronic Regimen & Refill Timelines:'}
                 </span>
                 <button
                   type="button"
@@ -829,7 +792,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                           value={m.name}
                           onChange={e => handleMedChange(idx, 'name', e.target.value)}
                           placeholder="Glucophage, Concor, Lipitor..."
-                          className="w-full bg-[#1f1f1f] light:bg-white border border-[#383838] p-2 rounded-lg text-white light:text-neutral-900 font-bold text-xs outline-none focus:border-blue-500"
+                          className="w-full bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-300 p-2 rounded-lg text-white light:text-neutral-900 font-bold text-xs outline-none focus:border-blue-500"
                         />
                       </div>
 
@@ -839,7 +802,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                           type="date"
                           value={m.lastDispenseDate}
                           onChange={e => handleMedChange(idx, 'lastDispenseDate', e.target.value)}
-                          className="w-full bg-[#1f1f1f] light:bg-white border border-[#383838] p-2 rounded-lg text-white light:text-neutral-900 text-xs font-mono outline-none focus:border-blue-500"
+                          className="w-full bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-300 p-2 rounded-lg text-white light:text-neutral-900 text-xs font-mono outline-none focus:border-blue-500"
                         />
                       </div>
 
@@ -851,7 +814,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                           max={365}
                           value={m.daysSupply}
                           onChange={e => handleMedChange(idx, 'daysSupply', parseInt(e.target.value, 10) || 30)}
-                          className="w-full bg-[#1f1f1f] light:bg-white border border-[#383838] p-2 rounded-lg text-white light:text-neutral-900 text-xs font-bold text-center outline-none focus:border-blue-500"
+                          className="w-full bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-300 p-2 rounded-lg text-white light:text-neutral-900 text-xs font-bold text-center outline-none focus:border-blue-500"
                         />
                       </div>
 
@@ -859,7 +822,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                         <button
                           type="button"
                           onClick={() => handleRemoveMedication(idx)}
-                          className="p-1.5 rounded-lg text-neutral-400 hover:text-rose-400 hover:bg-neutral-800 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg text-neutral-400 hover:text-rose-400 hover:bg-neutral-800 light:hover:bg-neutral-200 transition-colors cursor-pointer"
                           title={lang === 'ar' ? 'حذف الدواء' : 'Delete Medication'}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -898,7 +861,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                       placeholder="120"
                       value={newSys}
                       onChange={e => setNewSys(e.target.value)}
-                      className="w-full bg-[#1f1f1f] light:bg-white border border-[#383838] p-2 rounded-lg text-white light:text-neutral-900 text-xs text-center font-mono font-bold"
+                      className="w-full bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-300 p-2 rounded-lg text-white light:text-neutral-900 text-xs text-center font-mono font-bold"
                     />
                   </div>
 
@@ -909,7 +872,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                       placeholder="80"
                       value={newDia}
                       onChange={e => setNewDia(e.target.value)}
-                      className="w-full bg-[#1f1f1f] light:bg-white border border-[#383838] p-2 rounded-lg text-white light:text-neutral-900 text-xs text-center font-mono font-bold"
+                      className="w-full bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-300 p-2 rounded-lg text-white light:text-neutral-900 text-xs text-center font-mono font-bold"
                     />
                   </div>
 
@@ -920,7 +883,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                       placeholder="110"
                       value={newSugar}
                       onChange={e => setNewSugar(e.target.value)}
-                      className="w-full bg-[#1f1f1f] light:bg-white border border-[#383838] p-2 rounded-lg text-white light:text-neutral-900 text-xs text-center font-mono font-bold"
+                      className="w-full bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-300 p-2 rounded-lg text-white light:text-neutral-900 text-xs text-center font-mono font-bold"
                     />
                   </div>
 
@@ -931,7 +894,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                       placeholder="HbA1c: 6.8% / 72 bpm"
                       value={newMisc}
                       onChange={e => setNewMisc(e.target.value)}
-                      className="w-full bg-[#1f1f1f] light:bg-white border border-[#383838] p-2 rounded-lg text-white light:text-neutral-900 text-xs"
+                      className="w-full bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-300 p-2 rounded-lg text-white light:text-neutral-900 text-xs"
                     />
                   </div>
                 </div>
@@ -946,9 +909,9 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
               </div>
 
               {/* Vitals History Table */}
-              <div className="border border-[#383838] rounded-xl overflow-hidden">
+              <div className="border border-[#383838] light:border-neutral-200 rounded-xl overflow-hidden">
                 <table className="w-full text-right dir-rtl text-xs">
-                  <thead className="bg-[#292929] light:bg-neutral-100 text-neutral-300 font-bold border-b border-[#383838]">
+                  <thead className="bg-[#292929] light:bg-neutral-100 text-neutral-300 light:text-neutral-700 font-bold border-b border-[#383838] light:border-neutral-200">
                     <tr>
                       <th className="py-2.5 px-3">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>
                       <th className="py-2.5 px-3">{lang === 'ar' ? 'ضغط الدم (BP)' : 'BP'}</th>
@@ -957,7 +920,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                       <th className="py-2.5 px-3">{lang === 'ar' ? 'التقييم' : 'Assessment'}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#2e2e2e] text-neutral-200">
+                  <tbody className="divide-y divide-[#2e2e2e] light:divide-neutral-200 text-neutral-200 light:text-neutral-800">
                     {(formData.vitals || []).length === 0 ? (
                       <tr>
                         <td colSpan={5} className="text-center py-8 text-neutral-400">
@@ -966,13 +929,13 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                       </tr>
                     ) : (
                       formData.vitals!.map((v, i) => (
-                        <tr key={i} className="hover:bg-neutral-800/30">
+                        <tr key={i} className="hover:bg-neutral-800/30 light:hover:bg-neutral-100/60">
                           <td className="py-2.5 px-3 font-mono text-neutral-400">{v.date}</td>
-                          <td className="py-2.5 px-3 font-bold font-mono text-blue-400">{v.bp}</td>
-                          <td className="py-2.5 px-3 font-mono font-bold text-amber-400">{v.sugar}</td>
-                          <td className="py-2.5 px-3 text-neutral-300">{v.misc}</td>
+                          <td className="py-2.5 px-3 font-bold font-mono text-blue-400 light:text-blue-600">{v.bp}</td>
+                          <td className="py-2.5 px-3 font-mono font-bold text-amber-400 light:text-amber-600">{v.sugar}</td>
+                          <td className="py-2.5 px-3 text-neutral-300 light:text-neutral-700">{v.misc}</td>
                           <td className="py-2.5 px-3">
-                            <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/40">
+                            <span className="text-[11px] font-semibold text-emerald-400 light:text-emerald-700 bg-emerald-950/40 light:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-800/40 light:border-emerald-300">
                               {v.assessment || 'مستقر'}
                             </span>
                           </td>
@@ -999,8 +962,8 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                     </span>
                   </div>
                   {isUploadingScan && (
-                    <span className="text-xs text-blue-400 font-bold flex items-center gap-1.5 animate-pulse">
-                      <UploadCloud className="w-3.5 h-3.5" />
+                    <span className="text-xs text-blue-400 font-bold flex items-center gap-1.5">
+                      <UploadCloud className="w-3.5 h-3.5 animate-spin" />
                       <span>{lang === 'ar' ? 'جارِ معالجة ورفع الصورة...' : 'Uploading full-res scan...'}</span>
                     </span>
                   )}
@@ -1018,13 +981,13 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                 <div className="flex items-center justify-between text-[11px] text-neutral-400 flex-wrap gap-2">
                   <span>
                     {lang === 'ar'
-                      ? 'يتم تخزين الصورة بنقائها وجودتها الكاملة مع حفظها تلقائياً على Google Drive في مجلد PharmPulse.'
-                      : 'Saved in 100% original full resolution with automatic Google Drive sync.'}
+                      ? 'يتم تخزين الصورة بنقائها وجودتها الكاملة مع حفظ رابطها المباشر في Google Sheet و Google Drive.'
+                      : 'Stored with direct URLs saved in Google Sheet & Google Drive.'}
                   </span>
                   {gasUrl ? (
                     <span className="text-emerald-400 flex items-center gap-1 font-semibold">
                       <CheckCircle2 className="w-3 h-3" />
-                      <span>{lang === 'ar' ? 'المزامنة مع Google Drive مفعلة ☁️' : 'Google Drive Auto-Sync Active'}</span>
+                      <span>{lang === 'ar' ? 'المزامنة مع Google Drive والشيت مفعلة ☁️' : 'Drive & Sheet Sync Active'}</span>
                     </span>
                   ) : (
                     <span className="text-amber-400 flex items-center gap-1">
@@ -1037,7 +1000,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
 
               {/* Gallery Grid */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold text-neutral-300">
+                <div className="flex items-center justify-between text-xs font-bold text-neutral-300 light:text-neutral-700">
                   <span>{lang === 'ar' ? 'معرض الوصفات والتحاليل المخزنة:' : 'Stored Prescriptions & Lab Scans:'}</span>
                   <span className="text-neutral-500 font-normal">
                     {(formData.scans || []).length} {lang === 'ar' ? 'صورة' : 'images'}
@@ -1045,8 +1008,8 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                 </div>
 
                 {(formData.scans || []).length === 0 ? (
-                  <div className="border border-dashed border-[#383838] rounded-xl p-8 text-center text-neutral-500 space-y-2">
-                    <ImageIcon className="w-8 h-8 mx-auto text-neutral-600" />
+                  <div className="border border-dashed border-[#383838] light:border-neutral-300 rounded-xl p-8 text-center text-neutral-500 space-y-2">
+                    <ImageIcon className="w-8 h-8 mx-auto text-neutral-600 light:text-neutral-400" />
                     <p className="text-xs">
                       {lang === 'ar'
                         ? 'لا توجد صور روشتات أو تحاليل مرفقة لهذا المريض بعد.'
@@ -1094,8 +1057,8 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {/* Morning */}
-                <div className="bg-[#141414] p-3.5 rounded-xl border border-[#2e2e2e] space-y-2">
-                  <div className="font-bold text-amber-400 flex items-center gap-1.5 text-xs">
+                <div className="bg-[#141414] light:bg-neutral-50 p-3.5 rounded-xl border border-[#2e2e2e] light:border-neutral-200 space-y-2">
+                  <div className="font-bold text-amber-400 light:text-amber-600 flex items-center gap-1.5 text-xs">
                     <span>☀️</span>
                     <span>{lang === 'ar' ? 'الصباح / الإفطار' : 'Morning / Breakfast'}</span>
                   </div>
@@ -1103,10 +1066,10 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                     {formData.medications
                       .filter(m => m.timing === 'morning' || m.timing === 'bid' || !m.timing)
                       .map((m, i) => (
-                        <div key={i} className="p-2 rounded bg-[#1f1f1f] border border-[#383838]">
-                          <strong className="text-white block">{m.name}</strong>
+                        <div key={i} className="p-2 rounded bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200">
+                          <strong className="text-white light:text-neutral-900 block">{m.name}</strong>
                           <span className="text-[10px] text-neutral-400">
-                            {m.mealRelation === 'before_meal' ? 'قبل الإفطار بـ 30 دقيقة' : 'مع أو بعد الإفطار'}
+                            {m.mealRelation === 'before_meal' ? (lang === 'ar' ? 'قبل الإفطار بـ 30 دقيقة' : '30 min before breakfast') : (lang === 'ar' ? 'مع أو بعد الإفطار' : 'With or after breakfast')}
                           </span>
                         </div>
                       ))}
@@ -1114,8 +1077,8 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                 </div>
 
                 {/* Noon */}
-                <div className="bg-[#141414] p-3.5 rounded-xl border border-[#2e2e2e] space-y-2">
-                  <div className="font-bold text-blue-400 flex items-center gap-1.5 text-xs">
+                <div className="bg-[#141414] light:bg-neutral-50 p-3.5 rounded-xl border border-[#2e2e2e] light:border-neutral-200 space-y-2">
+                  <div className="font-bold text-blue-400 light:text-blue-600 flex items-center gap-1.5 text-xs">
                     <span>🌤️</span>
                     <span>{lang === 'ar' ? 'الظهيرة / الغداء' : 'Noon / Lunch'}</span>
                   </div>
@@ -1123,20 +1086,20 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                     {formData.medications
                       .filter(m => m.timing === 'noon')
                       .map((m, i) => (
-                        <div key={i} className="p-2 rounded bg-[#1f1f1f] border border-[#383838]">
-                          <strong className="text-white block">{m.name}</strong>
-                          <span className="text-[10px] text-neutral-400">بعد الغداء</span>
+                        <div key={i} className="p-2 rounded bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200">
+                          <strong className="text-white light:text-neutral-900 block">{m.name}</strong>
+                          <span className="text-[10px] text-neutral-400">{lang === 'ar' ? 'بعد الغداء' : 'After lunch'}</span>
                         </div>
                       ))}
                     {formData.medications.filter(m => m.timing === 'noon').length === 0 && (
-                      <span className="text-neutral-500 text-[11px]">لا توجد جرعات ظهيرة</span>
+                      <span className="text-neutral-500 text-[11px]">{lang === 'ar' ? 'لا توجد جرعات ظهيرة' : 'No noon doses'}</span>
                     )}
                   </div>
                 </div>
 
                 {/* Evening */}
-                <div className="bg-[#141414] p-3.5 rounded-xl border border-[#2e2e2e] space-y-2">
-                  <div className="font-bold text-orange-400 flex items-center gap-1.5 text-xs">
+                <div className="bg-[#141414] light:bg-neutral-50 p-3.5 rounded-xl border border-[#2e2e2e] light:border-neutral-200 space-y-2">
+                  <div className="font-bold text-orange-400 light:text-orange-600 flex items-center gap-1.5 text-xs">
                     <span>🌅</span>
                     <span>{lang === 'ar' ? 'المساء / العشاء' : 'Evening / Dinner'}</span>
                   </div>
@@ -1144,17 +1107,17 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                     {formData.medications
                       .filter(m => m.timing === 'bid' || m.timing === 'evening')
                       .map((m, i) => (
-                        <div key={i} className="p-2 rounded bg-[#1f1f1f] border border-[#383838]">
-                          <strong className="text-white block">{m.name}</strong>
-                          <span className="text-[10px] text-neutral-400">مع العشاء</span>
+                        <div key={i} className="p-2 rounded bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200">
+                          <strong className="text-white light:text-neutral-900 block">{m.name}</strong>
+                          <span className="text-[10px] text-neutral-400">{lang === 'ar' ? 'مع العشاء' : 'With dinner'}</span>
                         </div>
                       ))}
                   </div>
                 </div>
 
                 {/* Bedtime */}
-                <div className="bg-[#141414] p-3.5 rounded-xl border border-[#2e2e2e] space-y-2">
-                  <div className="font-bold text-indigo-400 flex items-center gap-1.5 text-xs">
+                <div className="bg-[#141414] light:bg-neutral-50 p-3.5 rounded-xl border border-[#2e2e2e] light:border-neutral-200 space-y-2">
+                  <div className="font-bold text-indigo-400 light:text-indigo-600 flex items-center gap-1.5 text-xs">
                     <span>🌙</span>
                     <span>{lang === 'ar' ? 'قبل النوم' : 'Bedtime'}</span>
                   </div>
@@ -1162,9 +1125,9 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                     {formData.medications
                       .filter(m => m.timing === 'bedtime')
                       .map((m, i) => (
-                        <div key={i} className="p-2 rounded bg-[#1f1f1f] border border-[#383838]">
-                          <strong className="text-white block">{m.name}</strong>
-                          <span className="text-[10px] text-neutral-400">قبل النوم مباشرة</span>
+                        <div key={i} className="p-2 rounded bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200">
+                          <strong className="text-white light:text-neutral-900 block">{m.name}</strong>
+                          <span className="text-[10px] text-neutral-400">{lang === 'ar' ? 'قبل النوم مباشرة' : 'At bedtime'}</span>
                         </div>
                       ))}
                   </div>
@@ -1236,10 +1199,10 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
 
               {/* Danger Zone: Permanent Patient Deletion */}
               {patient?.id && (
-                <div className="p-4 rounded-xl bg-rose-950/30 border border-rose-800/40 space-y-3 mt-6">
+                <div className="p-4 rounded-xl bg-rose-950/30 light:bg-rose-50 border border-rose-800/40 light:border-rose-200 space-y-3 mt-6">
                   <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-2 text-rose-400 font-bold text-xs">
-                      <ShieldAlert className="w-4 h-4 text-rose-400" />
+                    <div className="flex items-center gap-2 text-rose-400 light:text-rose-700 font-bold text-xs">
+                      <ShieldAlert className="w-4 h-4 text-rose-400 light:text-rose-600" />
                       <span>{lang === 'ar' ? 'منطقة العمليات الحساسة (Danger Zone)' : 'Danger Zone'}</span>
                     </div>
                     <button
@@ -1251,7 +1214,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                       <span>{lang === 'ar' ? 'حذف ملف المريض نهائياً' : 'Delete Patient Permanently'}</span>
                     </button>
                   </div>
-                  <p className="text-[11px] text-neutral-300 leading-relaxed">
+                  <p className="text-[11px] text-neutral-300 light:text-neutral-600 leading-relaxed">
                     {lang === 'ar'
                       ? 'سيؤدي حذف هذا الملف إلى إزالة كافة بيانات المريض وقائمة أدويته وسجلات الضغط والسكر والمتابعات السريرية المرتبطة به نهائياً.'
                       : 'Deleting this patient will permanently remove their records, active regimens, vitals logs, and linked clinical follow-ups.'}
@@ -1263,7 +1226,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
         </div>
 
         {/* Modal Bottom Footer */}
-        <div className="p-4 bg-[#292929] light:bg-neutral-100 border-t border-[#383838] flex items-center justify-between gap-3">
+        <div className="p-4 bg-[#292929] light:bg-neutral-100 border-t border-[#383838] light:border-neutral-200 flex items-center justify-between gap-3">
           {patient?.id && activeTab === 'thermal' ? (
             <button
               type="button"
@@ -1281,7 +1244,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold transition-colors"
+              className="px-4 py-2 rounded-lg bg-neutral-800 light:bg-neutral-200 hover:bg-neutral-700 light:hover:bg-neutral-300 text-neutral-300 light:text-neutral-800 text-xs font-semibold transition-colors"
             >
               {lang === 'ar' ? 'إلغاء' : 'Cancel'}
             </button>
@@ -1298,11 +1261,11 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
 
       {/* Permanent Delete Confirmation Dialog */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[60] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-[60] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[#1f1f1f] border border-rose-800/60 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
             <div className="flex items-center gap-3 text-rose-400">
               <div className="p-2.5 rounded-full bg-rose-950/60 border border-rose-800/60">
-                <AlertTriangle className="w-6 h-6 text-rose-400" />
+                <ShieldAlert className="w-6 h-6 text-rose-400" />
               </div>
               <div>
                 <h3 className="font-bold text-sm text-white">

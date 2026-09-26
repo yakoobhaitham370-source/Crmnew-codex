@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Header } from './components/Header';
 import { Navigation, ViewType } from './components/Navigation';
 import { DashboardView } from './components/views/DashboardView';
@@ -50,7 +50,6 @@ export default function App() {
   const [activeView, setActiveView] = useState<ViewType>('dashboard');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const [currentTime, setCurrentTime] = useState<string>('00:00:00');
 
   // Core state (Default empty, demo examples removed)
   const [patients, setPatients] = useState<Patient[]>(() => {
@@ -96,6 +95,16 @@ export default function App() {
     } catch (e) {}
     return DEFAULT_SETTINGS;
   });
+
+  // State refs for stable callback access
+  const patientsRef = useRef(patients);
+  patientsRef.current = patients;
+
+  const followUpsRef = useRef(followUps);
+  followUpsRef.current = followUps;
+
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
 
   // Cloud Sync state
   const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'error' | 'idle'>('synced');
@@ -149,22 +158,13 @@ export default function App() {
     }, 3500);
   }, []);
 
-  // Clock ticker
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const d = new Date();
-      setCurrentTime(d.toTimeString().split(' ')[0]);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
   // Hydrate all patient scans from IndexedDB on initial mount
   useEffect(() => {
     let active = true;
     const hydrateAllScans = async () => {
       try {
         const enrichedList = await Promise.all(
-          patients.map(p => (p.scans && p.scans.length > 0 ? enrichPatientScans(p) : p))
+          patientsRef.current.map((p: Patient) => (p.scans && p.scans.length > 0 ? enrichPatientScans(p) : p))
         );
         if (active) {
           setPatients(enrichedList);
@@ -226,7 +226,11 @@ export default function App() {
 
   // Background Google Sheet Sync
   const handleSheetSync = useCallback(async (isManual = false) => {
-    if (!settings.gasUrl || !settings.gasUrl.trim()) {
+    const currentSettings = settingsRef.current;
+    const currentPatients = patientsRef.current;
+    const currentFollowUps = followUpsRef.current;
+
+    if (!currentSettings.gasUrl || !currentSettings.gasUrl.trim()) {
       setSyncStatus('idle');
       setSyncMessage(lang === 'ar' ? 'الرابط غير محدد' : 'No Gas URL');
       if (isManual) {
@@ -243,16 +247,16 @@ export default function App() {
 
     try {
       // Fetch upstream using high-speed server proxy with JSONP fallback
-      const data = await fetchFromGoogleSheet(settings.gasUrl);
+      const data = await fetchFromGoogleSheet(currentSettings.gasUrl);
       if (data && Array.isArray(data.patients)) {
         // Sanitize out any legacy mock demo records that might still exist in the user's sheet
         const sanitizedPatients = data.patients.filter(
           p => !p.id?.startsWith('PT-1048') && !p.id?.startsWith('PT-1065')
         );
         const hasLegacyDemo = data.patients.length > sanitizedPatients.length;
-        if (hasLegacyDemo && settings.gasUrl) {
+        if (hasLegacyDemo && currentSettings.gasUrl) {
           console.log('Cleansing legacy demo patients from Google Sheet...');
-          clearGoogleSheetDatabase(settings.gasUrl, ['PT-104821', 'PT-104822', 'PT-104823', 'PT-104824', 'PT-106550']);
+          clearGoogleSheetDatabase(currentSettings.gasUrl, ['PT-104821', 'PT-104822', 'PT-104823', 'PT-104824', 'PT-106550']);
         }
 
         const sanitizedFollowUps = (data.followUps || []).filter(
@@ -261,16 +265,16 @@ export default function App() {
 
         // If sheet is completely empty but local app has real patients:
         // Automatically seed the fresh sheet so data is never erased!
-        if (sanitizedPatients.length === 0 && patients.length > 0) {
+        if (sanitizedPatients.length === 0 && currentPatients.length > 0) {
           console.log('Google Sheet is newly created: seeding data upstream...');
-          await syncPushToGoogleSheet(settings.gasUrl, patients, followUps, settings);
+          await syncPushToGoogleSheet(currentSettings.gasUrl, currentPatients, currentFollowUps, currentSettings);
           setSyncStatus('synced');
           setSyncMessage(lang === 'ar' ? 'تم تزويد الشيت' : 'Sheet Seeded');
           if (isManual) {
             showToast(
               lang === 'ar'
-                ? `تم تزويد Google Sheet الفارغ بـ (${patients.length} مريض) بنجاح!`
-                : `Seeded empty Google Sheet with (${patients.length} patients)!`,
+                ? `تم تزويد Google Sheet الفارغ بـ (${currentPatients.length} مريض) بنجاح!`
+                : `Seeded empty Google Sheet with (${currentPatients.length} patients)!`,
               'success'
             );
           }
@@ -313,14 +317,14 @@ export default function App() {
         );
       }
     }
-  }, [settings.gasUrl, lang, showToast, patients, followUps, settings]);
+  }, [lang, showToast]);
 
   // 1. Automatically sync with Google Sheet on app startup
   useEffect(() => {
     if (settings.gasUrl) {
       handleSheetSync(false);
     }
-  }, []);
+  }, [settings.gasUrl, handleSheetSync]);
 
   // 2. Automatically sync whenever the user switches back to the tab or on 60s periodic poll
   useEffect(() => {
@@ -762,7 +766,6 @@ export default function App() {
       {/* Top Command Bar / Header */}
       <Header
         pharmacyName={settings.pharmacyName}
-        currentTime={currentTime}
         syncStatus={syncStatus}
         syncMessage={syncMessage}
         onSync={() => handleSheetSync(true)}

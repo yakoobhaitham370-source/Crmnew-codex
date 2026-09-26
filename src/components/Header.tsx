@@ -23,7 +23,7 @@ import { calculatePDC } from '../utils/pharmacyCalculations';
 
 interface HeaderProps {
   pharmacyName: string;
-  currentTime: string;
+  currentTime?: string;
   syncStatus: 'synced' | 'syncing' | 'error' | 'idle';
   syncMessage: string;
   onSync: () => void;
@@ -46,7 +46,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   pharmacyName,
-  currentTime,
+  currentTime: externalCurrentTime,
   syncStatus,
   syncMessage,
   onSync,
@@ -64,6 +64,16 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectPatient,
   onViewAllResults,
 }) => {
+  const [internalTime, setInternalTime] = useState<string>(() => new Date().toTimeString().split(' ')[0]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setInternalTime(new Date().toTimeString().split(' ')[0]);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const currentTime = externalCurrentTime || internalTime;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
