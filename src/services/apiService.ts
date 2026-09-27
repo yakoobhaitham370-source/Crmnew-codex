@@ -102,9 +102,10 @@ async function callGasApi(
   }
 ): Promise<any> {
   const method = options.method || 'POST';
-  const timeoutMs = options.timeoutMs || 8000;
+  const timeoutMs = options.timeoutMs || 10000;
+  const cleanUrl = gasUrl.trim();
 
-  // 1. Try server proxy route first if available
+  // 1. Try server proxy route first (works in AI Studio backend & Netlify Functions)
   try {
     const proxyController = new AbortController();
     const proxyTimeout = setTimeout(() => proxyController.abort(), timeoutMs);
@@ -113,7 +114,7 @@ async function callGasApi(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        gasUrl,
+        gasUrl: cleanUrl,
         method,
         params: options.params,
         payload: options.payload,
@@ -124,25 +125,54 @@ async function callGasApi(
 
     if (proxyRes.ok) {
       const data = await proxyRes.json();
-      return data;
+      if (data && (data.status === 'SUCCESS' || data.fileUrl || data.patients)) {
+        return data;
+      }
     }
   } catch (proxyErr) {
-    // If backend proxy is not accessible, fall back to browser direct/JSONP
+    // If backend proxy is not accessible, fall back to direct browser methods
   }
 
-  // 2. Direct browser fallback
-  const cleanUrl = gasUrl.trim();
+  // 2. Direct browser methods
   if (method === 'GET') {
     return fetchFromGoogleSheetJSONP(cleanUrl, options.params);
   } else {
-    // Direct browser POST using no-cors to avoid browser 302 blocking
     const bodyStr = typeof options.payload === 'string' ? options.payload : JSON.stringify(options.payload || {});
+
+    // Try direct CORS fetch with text/plain (avoids preflight and reads 302 redirect response)
+    try {
+      const directController = new AbortController();
+      const directTimeout = setTimeout(() => directController.abort(), timeoutMs);
+
+      const directRes = await fetch(cleanUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: bodyStr,
+        signal: directController.signal,
+      });
+      clearTimeout(directTimeout);
+
+      if (directRes.ok) {
+        const text = await directRes.text();
+        try {
+          const json = JSON.parse(text);
+          return json;
+        } catch {
+          return { status: 'SUCCESS', raw: text };
+        }
+      }
+    } catch (directErr) {
+      console.warn('Direct CORS POST threw exception, using no-cors channel...', directErr);
+    }
+
+    // Direct browser POST using no-cors fallback
     await fetch(cleanUrl, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: bodyStr,
     });
+
     return { status: 'SUCCESS', mode: 'no-cors' };
   }
 }
