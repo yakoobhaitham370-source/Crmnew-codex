@@ -34,6 +34,7 @@ import { uploadScanImageToDrive } from '../../services/apiService';
 import { PatientAdherenceVitalsChart } from '../charts/PatientAdherenceVitalsChart';
 import { ImagePreviewModal } from './ImagePreviewModal';
 import { saveScanImage, getScanImage, enrichPatientScans, deleteScanImage } from '../../utils/scanStorage';
+import { compressMedicalImage } from '../../utils/imageCompressor';
 
 // Internal Scan Card subcomponent with reliable IndexedDB + Google Drive resolution
 const ScanCard: React.FC<{
@@ -421,19 +422,17 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
     onShowToast(lang === 'ar' ? 'تم تسجيل القراءة الحيوية بنجاح' : 'Vitals logged', 'success');
   };
 
-  const handleScanUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleScanUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploadingScan(true);
-    const reader = new FileReader();
-    reader.onload = async evt => {
-      const base64 = evt.target?.result as string;
+    try {
+      // High-performance client-side medical compression (keeps crystal-clear text, drops 10MB -> ~300KB)
+      const compressed = await compressMedicalImage(file, 1600, 0.82);
+      const base64 = compressed.base64;
       const scanId = 'scan-' + Date.now();
-      const fileSizeStr =
-        file.size > 1024 * 1024
-          ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
-          : `${Math.round(file.size / 1024)} KB`;
+      const fileSizeStr = compressed.fileSizeStr;
 
       // 1. Immediately save to IndexedDB (virtually unlimited quota)
       await saveScanImage(scanId, base64, {
@@ -442,7 +441,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
         size: fileSizeStr,
       });
 
-      // 2. Create initial local scan with full resolution
+      // 2. Create initial local scan
       const newScan: LabScan = {
         id: scanId,
         date: new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US'),
@@ -460,12 +459,12 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
       setIsUploadingScan(false);
       onShowToast(
         lang === 'ar'
-          ? 'تم حفظ صورة الوصفة / التحليل بدقة كاملة'
-          : 'Full resolution prescription scan saved',
+          ? `تم حفظ صورة الوصفة بنجاح (${fileSizeStr})`
+          : `Prescription scan saved (${fileSizeStr})`,
         'success'
       );
 
-      // 3. Asynchronously upload full-resolution pure image to Google Drive if gasUrl is set
+      // 3. Asynchronously upload optimized image to Google Drive if gasUrl is set
       if (gasUrl) {
         try {
           const driveRes = await uploadScanImageToDrive(
@@ -503,8 +502,14 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
           console.warn('Google Drive scan upload background error:', driveErr);
         }
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err: any) {
+      console.error('Scan processing error:', err);
+      setIsUploadingScan(false);
+      onShowToast(
+        lang === 'ar' ? 'حدث خطأ أثناء معالجة الصورة' : 'Error processing image',
+        'error'
+      );
+    }
   };
 
   const handleDeleteScan = async (scanId: string) => {

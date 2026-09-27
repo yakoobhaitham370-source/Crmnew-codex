@@ -255,6 +255,22 @@ export async function uploadScanImageToDrive(
 }
 
 /**
+ * Requests browser storage persistence to prevent iOS/Safari/Netlify from evicting IndexedDB
+ */
+export async function requestPersistentStorage(): Promise<boolean> {
+  if (typeof window !== 'undefined' && 'storage' in navigator && navigator.storage?.persist) {
+    try {
+      const isPersisted = await navigator.storage.persist();
+      console.log('IndexedDB persistent storage granted:', isPersisted);
+      return isPersisted;
+    } catch (e) {
+      console.warn('Could not request persistent storage:', e);
+    }
+  }
+  return false;
+}
+
+/**
  * Sanitizes patient scans before sending to Google Sheets so that huge base64 strings
  * do not exceed the 50,000 character cell limit, while preserving drive and preview URLs.
  */
@@ -329,36 +345,83 @@ export async function saveFollowUpToGoogleSheet(
 }
 
 /**
- * Push local database state upstream to Google Sheets (batch sync)
+ * Push local database state upstream to Google Sheets.
+ * Supports chunked batch processing for 2,000+ patients to prevent 50MB payload crashes or execution timeouts.
  */
 export async function syncPushToGoogleSheet(
   gasUrl: string,
   patients: Patient[],
   followUps: FollowUpEntry[],
-  settings?: any
+  settings?: any,
+  onProgress?: (synced: number, total: number) => void
 ) {
   if (!gasUrl) return { success: false, reason: 'NO_GAS_URL' };
 
   const cleanUrl = gasUrl.trim();
   const sanitizedPatients = patients.map(sanitizePatientForSheet);
-  const payload = {
-    action: 'SYNC_UPSTREAM',
-    patients: sanitizedPatients,
-    followUps,
-    settings,
-    timestamp: new Date().toISOString(),
-  };
+
+  // If patient count is small (<= 200), single batch sync
+  if (sanitizedPatients.length <= 200) {
+    const payload = {
+      action: 'SYNC_UPSTREAM',
+      patients: sanitizedPatients,
+      followUps,
+      settings,
+      timestamp: new Date().toISOString(),
+    };
+
+    try {
+      const result = await callGasApi(cleanUrl, {
+        method: 'POST',
+        payload,
+        timeoutMs: 15000,
+      });
+      if (onProgress) onProgress(sanitizedPatients.length, sanitizedPatients.length);
+      return { success: true, data: result };
+    } catch (err: any) {
+      console.warn('syncPushToGoogleSheet single batch error:', err);
+      return { success: false };
+    }
+  }
+
+  // Chunked batching for 2,000+ records (150 patients per chunk)
+  const CHUNK_SIZE = 150;
+  const totalChunks = Math.ceil(sanitizedPatients.length / CHUNK_SIZE);
 
   try {
-    const result = await callGasApi(cleanUrl, {
-      method: 'POST',
-      payload,
-      timeoutMs: 12000,
-    });
-    return { success: true, data: result };
+    for (let i = 0; i < totalChunks; i++) {
+      const start = i * CHUNK_SIZE;
+      const chunk = sanitizedPatients.slice(start, start + CHUNK_SIZE);
+      const isFirstChunk = i === 0;
+      const isLastChunk = i === totalChunks - 1;
+
+      const payload = {
+        action: 'SYNC_BATCH',
+        batchIndex: i,
+        totalBatches: totalChunks,
+        isFirstBatch: isFirstChunk,
+        isLastBatch: isLastChunk,
+        patients: chunk,
+        followUps: isFirstChunk ? followUps : [],
+        settings: isFirstChunk ? settings : undefined,
+        timestamp: new Date().toISOString(),
+      };
+
+      await callGasApi(cleanUrl, {
+        method: 'POST',
+        payload,
+        timeoutMs: 20000,
+      });
+
+      if (onProgress) {
+        onProgress(Math.min(start + CHUNK_SIZE, sanitizedPatients.length), sanitizedPatients.length);
+      }
+    }
+
+    return { success: true };
   } catch (err: any) {
-    console.warn('syncPushToGoogleSheet error:', err);
-    return { success: false };
+    console.warn('syncPushToGoogleSheet chunked error:', err);
+    return { success: false, error: err.message };
   }
 }
 

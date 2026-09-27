@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Users,
   Search,
@@ -11,6 +11,10 @@ import {
   Phone,
   LineChart,
   X,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react';
 import { Patient } from '../../types/pharmacy';
 import { calculatePDC } from '../../utils/pharmacyCalculations';
@@ -43,7 +47,7 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
   debouncedSearchQuery: externalDebouncedQuery,
 }) => {
   const [localSearch, setLocalSearch] = useState('');
-  const debouncedLocal = useDebounce(localSearch, 250);
+  const debouncedLocal = useDebounce(localSearch, 200);
 
   const effectiveSearch = searchQuery !== undefined ? searchQuery : localSearch;
   const effectiveDebouncedSearch =
@@ -68,6 +72,10 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
   const [familyFilter, setFamilyFilter] = useState('ALL');
   const [adherenceFilter, setAdherenceFilter] = useState('ALL');
 
+  // Pagination state
+  const [pageSize, setPageSize] = useState<number>(50);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
   const activePatients = useMemo(() => patients.filter(p => !p.isArchived), [patients]);
 
   const uniqueFamilies = useMemo(() => {
@@ -79,10 +87,10 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
   }, [activePatients]);
 
   const filteredPatients = useMemo(() => {
-    return activePatients.filter(p => {
-      const q = effectiveDebouncedSearch.toLowerCase().trim();
-      const digitsOnly = q.replace(/\D/g, '');
+    const q = effectiveDebouncedSearch.toLowerCase().trim();
+    const digitsOnly = q.replace(/\D/g, '');
 
+    return activePatients.filter(p => {
       const phoneRaw = p.phone || '';
       const phoneDigits = phoneRaw.replace(/\D/g, '');
       const matchPhone =
@@ -95,6 +103,8 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
         matchPhone ||
         p.id.toLowerCase().includes(q) ||
         (p.familyTag && p.familyTag.toLowerCase().includes(q)) ||
+        (p.notes && p.notes.toLowerCase().includes(q)) ||
+        (p.allergies && p.allergies.toLowerCase().includes(q)) ||
         (p.medications || []).some(m => m.name.toLowerCase().includes(q));
 
       const matchFamily =
@@ -111,6 +121,24 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
       return matchSearch && matchFamily && matchAdherence;
     });
   }, [activePatients, effectiveDebouncedSearch, familyFilter, adherenceFilter]);
+
+  // Reset to first page when query or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [effectiveDebouncedSearch, familyFilter, adherenceFilter, pageSize]);
+
+  // Total pages and sliced window
+  const totalPages = pageSize === -1 ? 1 : Math.max(1, Math.ceil(filteredPatients.length / pageSize));
+  const validCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedPatients = useMemo(() => {
+    if (pageSize === -1) return filteredPatients;
+    const startIdx = (validCurrentPage - 1) * pageSize;
+    return filteredPatients.slice(startIdx, startIdx + pageSize);
+  }, [filteredPatients, validCurrentPage, pageSize]);
+
+  const startRecord = filteredPatients.length === 0 ? 0 : (validCurrentPage - 1) * (pageSize === -1 ? filteredPatients.length : pageSize) + 1;
+  const endRecord = pageSize === -1 ? filteredPatients.length : Math.min(validCurrentPage * pageSize, filteredPatients.length);
 
   const handleExportCSV = () => {
     const headers = ['ID,Name,Phone,FamilyTag,Age,LoyaltyPoints,PDC,MedicationsCount'];
@@ -148,14 +176,14 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 transition-colors cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>{lang === 'ar' ? 'تصدير CSV' : 'Export CSV'}</span>
             </button>
             <button
               onClick={() => onOpenPatientModal()}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#0f6cbd] hover:bg-[#115ea3] text-white shadow-sm transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#0f6cbd] hover:bg-[#115ea3] text-white shadow-sm transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>{lang === 'ar' ? 'تسجيل مريض جديد' : 'New Patient'}</span>
@@ -172,14 +200,14 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
               type="text"
               value={effectiveSearch}
               onChange={e => handleSearchInput(e.target.value)}
-              placeholder={lang === 'ar' ? 'بحث بالاسم، الهاتف، الدواء...' : 'Search name, phone, drug...'}
+              placeholder={lang === 'ar' ? 'بحث بالاسم، الهاتف، التشخيص، الدواء...' : 'Search name, phone, diagnosis, drug...'}
               className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 text-xs rounded-lg px-8 py-2.5 outline-none focus:border-blue-500 pr-9"
             />
             {effectiveSearch && (
               <button
                 type="button"
                 onClick={handleClear}
-                className="absolute left-3 top-3 text-neutral-400 hover:text-white transition-colors"
+                className="absolute left-3 top-3 text-neutral-400 hover:text-white transition-colors cursor-pointer"
                 title={lang === 'ar' ? 'مسح البحث' : 'Clear search'}
               >
                 <X className="w-3.5 h-3.5" />
@@ -239,7 +267,6 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
         </div>
       )}
 
-
       {/* Patients Table */}
       <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
@@ -290,7 +317,7 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
                   </td>
                 </tr>
               ) : (
-                filteredPatients.map(p => {
+                paginatedPatients.map(p => {
                   const pdc = calculatePDC(p);
                   return (
                     <tr key={p.id} className="hover:bg-neutral-800/40 light:hover:bg-neutral-50 transition-colors">
@@ -298,7 +325,7 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
                       <td className="py-3 px-4 font-bold text-white light:text-neutral-900">
                         <button
                           onClick={() => onOpenPatientModal(p.id)}
-                          className="hover:text-blue-400 text-right hover:underline transition-colors"
+                          className="hover:text-blue-400 text-right hover:underline transition-colors cursor-pointer"
                         >
                           {p.name}
                         </button>
@@ -351,7 +378,7 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
                         <div className="flex items-center justify-center gap-1.5">
                           <button
                             onClick={() => onOpenPatientModal(p.id)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 transition-colors font-semibold"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 transition-colors font-semibold cursor-pointer"
                           >
                             <FileText className="w-3.5 h-3.5" />
                             <span>{lang === 'ar' ? 'الملف' : 'Dossier'}</span>
@@ -359,7 +386,7 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
                           <button
                             onClick={() => onOpenPatientModal(p.id, 'analytics')}
                             title={lang === 'ar' ? 'عرض مخطط الالتزام والمؤشرات الحيوية' : 'View Adherence & Vitals Chart'}
-                            className="p-1.5 rounded-lg bg-indigo-950/70 hover:bg-indigo-900 text-indigo-300 border border-indigo-700/60 transition-colors"
+                            className="p-1.5 rounded-lg bg-indigo-950/70 hover:bg-indigo-900 text-indigo-300 border border-indigo-700/60 transition-colors cursor-pointer"
                           >
                             <LineChart className="w-3.5 h-3.5 text-indigo-400" />
                           </button>
@@ -367,7 +394,7 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
                             <button
                               onClick={() => onOpenHouseholdModal(p.familyTag!)}
                               title={lang === 'ar' ? 'توحيد صرف العائلة' : 'Household Sync'}
-                              className="p-1.5 rounded-lg bg-blue-950 text-blue-300 border border-blue-800 hover:bg-blue-900 transition-colors"
+                              className="p-1.5 rounded-lg bg-blue-950 text-blue-300 border border-blue-800 hover:bg-blue-900 transition-colors cursor-pointer"
                             >
                               👨‍👩‍👧‍👦
                             </button>
@@ -375,7 +402,7 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
                           <button
                             onClick={() => onArchivePatient(p.id)}
                             title={lang === 'ar' ? 'تحويل للأرشيف' : 'Archive'}
-                            className="p-1.5 rounded-lg bg-neutral-800 text-neutral-400 hover:text-rose-400 border border-neutral-700 transition-colors"
+                            className="p-1.5 rounded-lg bg-neutral-800 text-neutral-400 hover:text-rose-400 border border-neutral-700 transition-colors cursor-pointer"
                           >
                             <Archive className="w-3.5 h-3.5" />
                           </button>
@@ -388,6 +415,81 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
             </tbody>
           </table>
         </div>
+
+        {/* High-Performance Pagination Footer */}
+        {filteredPatients.length > 0 && (
+          <div className="bg-[#242424] light:bg-neutral-50 border-t border-[#383838] light:border-neutral-200 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            {/* Range Counter & Page Size Selector */}
+            <div className="flex items-center gap-3 text-neutral-300 light:text-neutral-700 flex-wrap">
+              <span>
+                {lang === 'ar'
+                  ? `عرض ${startRecord} - ${endRecord} من إجمالي ${filteredPatients.length} مريض`
+                  : `Showing ${startRecord}-${endRecord} of ${filteredPatients.length} patients`}
+              </span>
+
+              <div className="flex items-center gap-1.5 bg-[#171717] light:bg-white border border-[#383838] light:border-neutral-300 rounded px-2 py-0.5">
+                <span className="text-[11px] text-neutral-400">{lang === 'ar' ? 'لكل صفحة:' : 'Per page:'}</span>
+                <select
+                  value={pageSize}
+                  onChange={e => setPageSize(Number(e.target.value))}
+                  className="bg-transparent text-white light:text-neutral-900 text-xs font-semibold outline-none cursor-pointer"
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={200}>200</option>
+                  <option value={-1}>{lang === 'ar' ? 'الكل (All)' : 'All'}</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Page Buttons */}
+            {pageSize !== -1 && totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage(1)}
+                  disabled={validCurrentPage <= 1}
+                  className="p-1.5 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 disabled:opacity-30 disabled:cursor-not-allowed border border-neutral-700 cursor-pointer transition-colors"
+                  title={lang === 'ar' ? 'الصفحة الأولى' : 'First page'}
+                >
+                  <ChevronsRight className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={validCurrentPage <= 1}
+                  className="flex items-center gap-1 px-2 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 disabled:opacity-30 disabled:cursor-not-allowed border border-neutral-700 font-semibold cursor-pointer transition-colors"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                  <span>{lang === 'ar' ? 'السابق' : 'Prev'}</span>
+                </button>
+
+                {/* Page Jump Selector */}
+                <div className="flex items-center gap-1 px-2 font-bold text-neutral-300">
+                  <span>{validCurrentPage}</span>
+                  <span className="text-neutral-500">/</span>
+                  <span>{totalPages}</span>
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={validCurrentPage >= totalPages}
+                  className="flex items-center gap-1 px-2 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 disabled:opacity-30 disabled:cursor-not-allowed border border-neutral-700 font-semibold cursor-pointer transition-colors"
+                >
+                  <span>{lang === 'ar' ? 'التالي' : 'Next'}</span>
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={validCurrentPage >= totalPages}
+                  className="p-1.5 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 disabled:opacity-30 disabled:cursor-not-allowed border border-neutral-700 cursor-pointer transition-colors"
+                  title={lang === 'ar' ? 'الصفحة الأخيرة' : 'Last page'}
+                >
+                  <ChevronsLeft className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -28,6 +28,7 @@ import {
   savePatientToGoogleSheet,
   saveFollowUpToGoogleSheet,
   clearGoogleSheetDatabase,
+  requestPersistentStorage,
 } from './services/apiService';
 import { enrichPatientScans, saveScanImage } from './utils/scanStorage';
 
@@ -319,8 +320,9 @@ export default function App() {
     }
   }, [lang, showToast]);
 
-  // 1. Automatically sync with Google Sheet on app startup
+  // 1. Automatically sync with Google Sheet on app startup & request storage persistence
   useEffect(() => {
+    requestPersistentStorage();
     if (settings.gasUrl) {
       handleSheetSync(false);
     }
