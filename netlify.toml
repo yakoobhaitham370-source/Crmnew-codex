@@ -3,7 +3,18 @@
   publish = "dist"
   functions = "netlify/functions"
 
-# Rewrite API routes to Netlify Serverless Functions
+# Rewrite Google Apps Script API proxy to Netlify Serverless Function
+[[redirects]]
+  from = "/api/gas/proxy"
+  to = "/.netlify/functions/gas-proxy"
+  status = 200
+
+[[redirects]]
+  from = "/api/gas/*"
+  to = "/.netlify/functions/gas-proxy"
+  status = 200
+
+# Rewrite AI endpoints if used
 [[redirects]]
   from = "/api/ai/audit-regimen"
   to = "/.netlify/functions/audit-regimen"

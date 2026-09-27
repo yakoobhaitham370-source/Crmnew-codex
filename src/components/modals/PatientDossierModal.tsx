@@ -1320,9 +1320,18 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
         <ImagePreviewModal
           scan={previewingScan}
           patientName={formData.name}
+          patientId={formData.id}
+          gasUrl={gasUrl}
           lang={lang}
           onClose={() => setPreviewingScan(null)}
           onDelete={handleDeleteScan}
+          onUpdateScan={(updatedScan) => {
+            setFormData(prev => ({
+              ...prev,
+              scans: (prev.scans || []).map(s => s.id === updatedScan.id ? updatedScan : s),
+            }));
+            setPreviewingScan(updatedScan);
+          }}
         />
       )}
     </div>

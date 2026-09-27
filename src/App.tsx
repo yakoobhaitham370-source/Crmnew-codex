@@ -282,13 +282,18 @@ export default function App() {
           return;
         }
 
+        // Enrich fetched patients with local IndexedDB high-resolution scans
+        const enrichedPatients = await Promise.all(
+          sanitizedPatients.map((p: Patient) => (p.scans && p.scans.length > 0 ? enrichPatientScans(p) : p))
+        );
+
         // The Google Sheet is the central cloud source of truth.
         setPatients(prev => {
-          const deletedCount = prev.filter(localP => !sanitizedPatients.some(dp => dp.id === localP.id)).length;
+          const deletedCount = prev.filter(localP => !enrichedPatients.some(dp => dp.id === localP.id)).length;
           if (deletedCount > 0 && !isManual) {
             console.log(`Auto-synced: Removed ${deletedCount} patient(s) deleted from Google Sheet.`);
           }
-          return sanitizedPatients;
+          return enrichedPatients;
         });
 
         if (Array.isArray(data.followUps)) {
