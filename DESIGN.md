@@ -19,3 +19,11 @@ The dashboard is an operational queue, with date and task-type filters, not a co
 Patient records validate identity fields, dates and supply lengths before saving. Shared phone numbers require explicit acknowledgement and show matching active and archived records. Keep allergies visible across record tabs and in the refill dialog. An empty allergy field means not recorded; only an explicit entry means no known allergies. Preserve the existing local storage and optional Google Apps Script integration.
 
 Validation: `npm test`, `npm run lint`, `npm run build`. Browser smoke checks cover queue filters, selected-medication refill, confirmed follow-up completion, persistence after reload, duplicate acknowledgement, invalid record input, both themes, Arabic RTL and narrow screens.
+
+## Refill reservations
+
+Reservations are staff-entered from WhatsApp, phone or in-person replies. The ordered workflow is Requested → Stock checked → Ready → Collected, plus cancellation with a reason. Stock checking is an explicit staff confirmation; it is not an inventory integration. Creating a request does not dispense or deduct stock. Confirming collection records each selected medicine’s actual days supplied and updates its refill history. Block overlapping open medication reservations, skipped stages, missing/archived patients and changed refill details. Keep pickup changes and stage events in history.
+
+A reservation uses stable medication IDs and snapshots of the requested refill details. The daily queue substitutes its pickup task for the same medicine’s refill task, and counts collection once. Patient records link to open reservations. Ready notifications prepare an external WhatsApp message without claiming sending or delivery.
+
+Reservation records use `crm_refill_reservations` on the current browser, are included in JSON backup export/restore, and are cleared by local database reset. They are not synchronized to Google Sheets and there is no automated inbound WhatsApp API. Display that boundary in the Reservations view. Guard local writes before updating the UI, roll back partial writes, and reject writes when another tab’s reservation data differs.

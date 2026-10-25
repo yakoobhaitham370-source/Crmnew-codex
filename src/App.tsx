@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Header } from './components/Header';
 import { Navigation, ViewType } from './components/Navigation';
+import { ReservationsView } from './components/views/ReservationsView';
+import { RESERVATION_STORAGE_KEY, ReservationError, parseReservations, persistReservationChange, createReservation, advanceReservation, collectReservation, rescheduleReservation, isOpenReservation, reservationRecordChanged } from './utils/reservations';
 import { DashboardView } from './components/views/DashboardView';
 import { PatientsView } from './components/views/PatientsView';
 import { FollowUpView } from './components/views/FollowUpView';
@@ -16,7 +18,7 @@ import { HouseholdSyncModal } from './components/modals/HouseholdSyncModal';
 import { FollowUpModal } from './components/modals/FollowUpModal';
 import { ResetDatabaseModal } from './components/modals/ResetDatabaseModal';
 
-import { Patient, FollowUpEntry, Settings, HouseholdMemberAlignment } from './types/pharmacy';
+import { Patient, FollowUpEntry, Settings, HouseholdMemberAlignment, RefillReservation, ReservationStatus } from './types/pharmacy';
 import { INITIAL_PATIENTS, INITIAL_FOLLOW_UPS } from './data/mockPatients';
 import { calculateDaysRemaining, formatYMD, filterPatientsByQuery } from './utils/pharmacyCalculations';
 import { useDebounce } from './utils/useDebounce';
@@ -86,6 +88,16 @@ export default function App() {
     }
     return INITIAL_FOLLOW_UPS;
   });
+
+  const [reservationLoad] = useState(() => {
+    try { return { reservations: parseReservations(JSON.parse(localStorage.getItem(RESERVATION_STORAGE_KEY) || '[]')), error: false }; }
+    catch { return { reservations: [] as RefillReservation[], error: true }; }
+  });
+  const [reservations, setReservations] = useState<RefillReservation[]>(reservationLoad.reservations);
+  const [reservationStorageError, setReservationStorageError] = useState(reservationLoad.error);
+  const reservationsRef = useRef(reservations);
+  reservationsRef.current = reservations;
+  const [reservationContext, setReservationContext] = useState<{ key: number; patientId?: string; medIndex?: number; reservationId?: string }>({ key: 0 });
 
   const [settings, setSettings] = useState<Settings>(() => {
     try {
@@ -435,6 +447,93 @@ export default function App() {
     }
   };
 
+  const reservationError = (error: unknown) => {
+    const code = error instanceof ReservationError ? error.code : 'storage';
+    const messages: Record<string, [string, string]> = {
+      patient: ['Choose an active patient record.', 'اختر ملف مريض نشطاً.'],
+      date: ['Choose a valid pickup date today or later.', 'اختر تاريخ استلام صحيحاً اليوم أو بعده.'],
+      medications: ['Choose medicines with valid dispense dates and supplies in the patient record.', 'اختر أدوية ذات تواريخ صرف ومدد صحيحة في ملف المريض.'],
+      duplicate: ['An open reservation already includes one of these medicines. Manage that reservation first.', 'يتضمن حجز مفتوح أحد هذه الأدوية. راجع الحجز الحالي أولاً.'],
+      transition: ['This action is unavailable for the current reservation stage.', 'هذا الإجراء غير متاح في مرحلة الحجز الحالية.'],
+      reason: ['Enter a cancellation reason.', 'أدخل سبب الإلغاء.'],
+      changed: ['The medication record changed since the request. Review it, then cancel and recreate this reservation.', 'تغيّر ملف الدواء منذ الطلب. راجعه ثم ألغِ الحجز وأنشئ حجزاً جديداً.'],
+      supply: ['Supply must be a whole number from 1 to 365 days.', 'يجب أن تكون مدة الصرف عدداً صحيحاً من ١ إلى ٣٦٥ يوماً.'],
+      storage: ['Could not save locally. Check browser storage and reload if another tab changed reservations. No action was confirmed.', 'تعذّر الحفظ محلياً. تحقق من مساحة المتصفح وأعد التحميل إذا تغيّرت الحجوزات في تبويب آخر. لم يتم تأكيد الإجراء.'],
+    };
+    const message = messages[code] || messages.storage;
+    showToast(lang === 'ar' ? message[1] : message[0], 'error');
+  };
+
+  const commitReservationState = (next: RefillReservation[], nextPatients?: Patient[], restoring = false) => {
+    if (!restoring) {
+      if (reservationStorageError) throw new ReservationError('storage');
+      const stored = parseReservations(JSON.parse(localStorage.getItem(RESERVATION_STORAGE_KEY) || '[]'));
+      if (JSON.stringify(stored) !== JSON.stringify(reservationsRef.current)) throw new ReservationError('storage');
+    }
+    persistReservationChange(localStorage, next, nextPatients);
+    reservationsRef.current = next;
+    setReservations(next);
+    setReservationStorageError(false);
+    if (nextPatients) { patientsRef.current = nextPatients; setPatients(nextPatients); }
+  };
+
+  const openReservations = (patientId?: string, medIndex?: number, reservationId?: string) => {
+    setReservationContext(previous => ({ key: previous.key + 1, patientId, medIndex, reservationId }));
+    setActiveView('reservations');
+  };
+
+  const handleCreateReservation = (patientId: string, indices: number[], pickupDate: string, source: RefillReservation['source'], notes: string) => {
+    try {
+      const current = patientsRef.current.find(p => p.id === patientId);
+      if (!current) throw new ReservationError('patient');
+      const result = createReservation(current, indices, pickupDate, source, notes, reservationsRef.current);
+      commitReservationState([result.reservation, ...reservationsRef.current], patientsRef.current.map(p => p.id === patientId ? result.patient : p));
+      if (settings.gasUrl) savePatientToGoogleSheet(settings.gasUrl, result.patient).catch(console.warn);
+      showToast(lang === 'ar' ? 'تم تسجيل طلب الحجز على هذا المتصفح' : 'Reservation requested and saved on this browser', 'success');
+      return true;
+    } catch (error) { reservationError(error); return false; }
+  };
+
+  const handleAdvanceReservation = (id: string, status: ReservationStatus, note = '') => {
+    try {
+      const current = reservationsRef.current.find(r => r.id === id);
+      if (!current) throw new ReservationError('transition');
+      if (status !== 'cancelled') {
+        const patient = patientsRef.current.find(p => p.id === current.patientId && !p.isArchived);
+        if (!patient) throw new ReservationError('patient');
+        if (reservationRecordChanged(current, patient)) throw new ReservationError('changed');
+      }
+      const updated = advanceReservation(current, status, note);
+      commitReservationState(reservationsRef.current.map(r => r.id === id ? updated : r));
+      showToast(lang === 'ar' ? 'تم تحديث حالة الحجز' : 'Reservation stage updated', 'success');
+      return true;
+    } catch (error) { reservationError(error); return false; }
+  };
+
+  const handleRescheduleReservation = (id: string, date: string) => {
+    try {
+      const current = reservationsRef.current.find(r => r.id === id);
+      if (!current) throw new ReservationError('transition');
+      const updated = rescheduleReservation(current, date);
+      commitReservationState(reservationsRef.current.map(r => r.id === id ? updated : r));
+      showToast(lang === 'ar' ? 'تم حفظ موعد الاستلام' : 'Pickup date saved', 'success');
+      return true;
+    } catch (error) { reservationError(error); return false; }
+  };
+
+  const handleCollectReservation = (id: string, supplies: Record<string, number>) => {
+    try {
+      const current = reservationsRef.current.find(r => r.id === id);
+      const patient = patientsRef.current.find(p => p.id === current?.patientId);
+      if (!current || !patient) throw new ReservationError('patient');
+      const result = collectReservation(current, patient, supplies);
+      commitReservationState(reservationsRef.current.map(r => r.id === id ? result.reservation : r), patientsRef.current.map(p => p.id === patient.id ? result.patient : p));
+      if (settings.gasUrl) savePatientToGoogleSheet(settings.gasUrl, result.patient).catch(console.warn);
+      showToast(lang === 'ar' ? 'تم تسجيل الاستلام والصرف وتحديث المواعيد' : 'Collection and dispensing recorded; refill dates updated', 'success');
+      return true;
+    } catch (error) { reservationError(error); return false; }
+  };
+
   const handleExecuteRefill = (patientId: string, medIndices: number[], daysSupply: number) => {
     const patient = patientsRef.current.find(p => p.id === patientId && !p.isArchived);
     if (!patient || !Number.isInteger(daysSupply) || daysSupply < 1 || daysSupply > 365) return;
@@ -592,9 +691,10 @@ export default function App() {
     const dump = {
       patients,
       followUps,
+      refillReservations: reservations,
       settings,
       exportedAt: new Date().toISOString(),
-      version: '2.5.0-enterprise',
+      version: '2.6.0-reservations',
     };
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(dump, null, 2));
     const dl = document.createElement('a');
@@ -615,7 +715,8 @@ export default function App() {
       try {
         const parsed = JSON.parse(evt.target?.result as string);
         if (Array.isArray(parsed.patients)) {
-          setPatients(parsed.patients);
+          const restoredReservations = parsed.refillReservations === undefined ? reservationsRef.current : parseReservations(parsed.refillReservations);
+          commitReservationState(restoredReservations, parsed.patients, true);
           if (Array.isArray(parsed.followUps)) setFollowUps(parsed.followUps);
           if (parsed.settings) setSettings(Object.assign({}, DEFAULT_SETTINGS, parsed.settings));
           showToast(lang === 'ar' ? 'تم استيراد النسخة الاحتياطية وتحديث السجلات بنجاح' : 'Backup restored', 'success');
@@ -647,8 +748,8 @@ export default function App() {
         }
       }
 
-      // 2. Clear all local application state
-      setPatients([]);
+      // 2. Clear local reservations with the patient records.
+      commitReservationState([], [], true);
       setFollowUps([]);
       setIsDossierOpen(false);
       setSelectedPatientForDossier(null);
@@ -759,9 +860,10 @@ export default function App() {
       {/* Navigation Pivot Bar */}
       <Navigation
         activeView={activeView}
-        onSelectView={setActiveView}
+        onSelectView={view => view === 'reservations' ? openReservations() : setActiveView(view)}
         dueRefillsCount={dueRefillsCount}
         activeFollowUpsCount={activeFollowUpsCount}
+        reservationsCount={reservations.filter(isOpenReservation).length}
         lang={lang}
       />
 
@@ -771,6 +873,8 @@ export default function App() {
           <DashboardView
             patients={patients}
             followUps={followUps}
+            reservations={reservations}
+            onOpenReservations={openReservations}
             pharmacyName={settings.pharmacyName}
             waTemplate={settings.waTemplate}
             smsTemplate={settings.smsTemplate}
@@ -781,6 +885,13 @@ export default function App() {
             onResolveFollowUp={handleResolveFollowUp}
             onShowToast={showToast}
           />
+        )}
+
+        {activeView === 'reservations' && (
+          <ReservationsView key={reservationContext.key} reservations={reservations} patients={patients} lang={lang} pharmacyName={settings.pharmacyName}
+            storageError={reservationStorageError} initialPatientId={reservationContext.patientId} initialMedIndex={reservationContext.medIndex} initialReservationId={reservationContext.reservationId}
+            onCreate={handleCreateReservation} onAdvance={handleAdvanceReservation} onReschedule={handleRescheduleReservation} onCollect={handleCollectReservation}
+            onOpenPatient={handleOpenPatientModal} onShowToast={showToast} />
         )}
 
         {activeView === 'patients' && (
@@ -868,6 +979,8 @@ export default function App() {
         isOpen={isDossierOpen}
         onClose={() => setIsDossierOpen(false)}
         patient={selectedPatientForDossier}
+        reservations={reservations}
+        onManageReservation={id => { setIsDossierOpen(false); openReservations(undefined, undefined, id); }}
         patients={patients}
         onOpenExistingPatient={handleOpenPatientModal}
         initialTab={dossierInitialTab}

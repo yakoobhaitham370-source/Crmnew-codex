@@ -19,7 +19,7 @@ import {
   User,
 } from 'lucide-react';
 import QRCode from 'qrcode';
-import { Patient, Medication, VitalsEntry, LabScan, FollowUpEntry, RefillRecord } from '../../types/pharmacy';
+import { Patient, Medication, VitalsEntry, LabScan, FollowUpEntry, RefillRecord, RefillReservation } from '../../types/pharmacy';
 import { MedicationRefillTimeline } from '../medications/MedicationRefillTimeline';
 import {
   getDrugScheduleSuggestion,
@@ -186,6 +186,8 @@ interface PatientDossierModalProps {
   onOpenExistingPatient: (patientId: string) => void;
   initialTab?: string;
   followUps?: FollowUpEntry[];
+  reservations: RefillReservation[];
+  onManageReservation: (id: string) => void;
   pharmacyName: string;
   gasUrl: string;
   lang: 'ar' | 'en';
@@ -204,6 +206,8 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
   onOpenExistingPatient,
   initialTab = 'demographics',
   followUps = [],
+  reservations,
+  onManageReservation,
   pharmacyName,
   gasUrl,
   lang,
@@ -605,6 +609,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
             <span>{lang === 'ar' ? 'الأدوية المسجلة:' : 'Recorded medications:'} <strong className="font-mono text-fg">{formData.medications.filter(m => m.name.trim()).length}</strong></span>
             <span>{lang === 'ar' ? 'المتابعات المفتوحة:' : 'Open follow-ups:'} <strong className="font-mono text-fg">{followUps.filter(f => f.patientId === formData.id && !f.resolved).length}</strong></span>
           </div>
+          {reservations.some(r => r.patientId === formData.id && !['collected', 'cancelled'].includes(r.status)) && <div className="flex flex-wrap items-center gap-2 text-xs"><strong>{lang === 'ar' ? 'الحجوزات المفتوحة:' : 'Open reservations:'}</strong>{reservations.filter(r => r.patientId === formData.id && !['collected', 'cancelled'].includes(r.status)).map(r => <button key={r.id} className="text-brand underline underline-offset-2" onClick={() => onManageReservation(r.id)}>{r.medications.map(m => m.name).join(', ')} · <time className="font-mono" dateTime={r.pickupDate}>{r.pickupDate}</time></button>)}</div>}
           <div className={`flex items-start gap-2 p-2 border rounded-[4px] ${formData.allergies?.trim() ? 'bg-brand-subtle border-brand text-fg' : 'bg-warning-bg border-warning-border text-warning-fg'}`}>
             <ShieldAlert className="size-4 shrink-0" />
             <span><strong>{lang === 'ar' ? 'الحساسيات:' : 'Allergies:'}</strong> {formData.allergies?.trim() || (lang === 'ar' ? 'غير مسجلة — تحقق مع المريض قبل الصرف.' : 'Not recorded — verify with the patient before dispensing.')}</span>

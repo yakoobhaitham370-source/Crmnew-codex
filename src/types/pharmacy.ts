@@ -138,3 +138,26 @@ export interface HouseholdMemberAlignment {
   neededTablets: number;
   targetDateStr: string;
 }
+
+export type ReservationStatus = 'requested' | 'stock_checked' | 'ready' | 'collected' | 'cancelled';
+export interface ReservedMedication {
+  medicationId: string;
+  name: string;
+  daysSupply: number;
+  lastDispenseDate: string;
+}
+export interface RefillReservation {
+  id: string;
+  patientId: string;
+  patientName: string;
+  phone: string;
+  medications: ReservedMedication[];
+  pickupDate: string;
+  source: 'whatsapp' | 'phone' | 'in_person';
+  notes: string;
+  status: ReservationStatus;
+  createdAt: string;
+  updatedAt: string;
+  history: { status: ReservationStatus; at: string; note?: string }[];
+  collectedAt?: string;
+}

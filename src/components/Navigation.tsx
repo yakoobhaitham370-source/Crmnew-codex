@@ -7,11 +7,13 @@ import {
   Boxes,
   LineChart,
   Archive,
+  ClipboardList,
   Settings as SettingsIcon,
 } from 'lucide-react';
 
 export type ViewType =
   | 'dashboard'
+  | 'reservations'
   | 'patients'
   | 'followup'
   | 'timeline'
@@ -25,6 +27,7 @@ interface NavigationProps {
   onSelectView: (view: ViewType) => void;
   dueRefillsCount: number;
   activeFollowUpsCount: number;
+  reservationsCount: number;
   lang: 'ar' | 'en';
 }
 
@@ -33,6 +36,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   onSelectView,
   dueRefillsCount,
   activeFollowUpsCount,
+  reservationsCount,
   lang,
 }) => {
   const navItems: {
@@ -49,6 +53,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       labelEn: 'Dashboard',
       icon: <LayoutDashboard className="w-4 h-4" />,
     },
+    { id: 'reservations', labelAr: 'حجوزات الصرف', labelEn: 'Reservations', icon: <ClipboardList className="w-4 h-4" />, badge: reservationsCount, badgeColor: 'bg-brand-subtle text-brand border border-brand' },
     {
       id: 'patients',
       labelAr: 'المرضى والعائلات',
