@@ -34,6 +34,7 @@ import { uploadScanImageToDrive } from '../../services/apiService';
 import { PatientAdherenceVitalsChart } from '../charts/PatientAdherenceVitalsChart';
 import { ImagePreviewModal } from './ImagePreviewModal';
 import { saveScanImage, getScanImage, enrichPatientScans, deleteScanImage } from '../../utils/scanStorage';
+import { duplicatePhonePatients, normalizeDigits, patientPhoneKey, validatePatientRecord, localDateKey, type RecordIssue } from '../../utils/patientRecords';
 import { compressMedicalImage } from '../../utils/imageCompressor';
 
 // Internal Scan Card subcomponent with reliable IndexedDB + Google Drive resolution
@@ -108,7 +109,7 @@ const ScanCard: React.FC<{
 
         {/* Hover Overlay */}
         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-          <span className="px-3 py-1.5 rounded-[4px] bg-blue-600 text-fg font-bold text-xs flex items-center gap-1.5">
+          <span className="px-3 py-1.5 rounded-[4px] bg-brand text-on-brand font-bold text-xs flex items-center gap-1.5">
             <ZoomIn className="w-4 h-4" />
             <span>{lang === 'ar' ? 'معاينة بالدقة الكاملة' : 'Full Preview'}</span>
           </span>
@@ -181,6 +182,8 @@ interface PatientDossierModalProps {
   isOpen: boolean;
   onClose: () => void;
   patient: Patient | null;
+  patients: Patient[];
+  onOpenExistingPatient: (patientId: string) => void;
   initialTab?: string;
   followUps?: FollowUpEntry[];
   pharmacyName: string;
@@ -197,6 +200,8 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
   isOpen,
   onClose,
   patient,
+  patients,
+  onOpenExistingPatient,
   initialTab = 'demographics',
   followUps = [],
   pharmacyName,
@@ -210,6 +215,8 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<string>(initialTab);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [recordIssues, setRecordIssues] = useState<RecordIssue[]>([]);
+  const [sharedPhoneAcknowledged, setSharedPhoneAcknowledged] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState<Patient>({
@@ -243,6 +250,9 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
   const [isUploadingScan, setIsUploadingScan] = useState(false);
   const [previewingScan, setPreviewingScan] = useState<LabScan | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   // Track loaded patient ID and open state to prevent flickering and re-render loops
   const lastLoadedPatientIdRef = useRef<string | null>(null);
@@ -284,7 +294,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
         });
       } else {
         setFormData({
-          id: 'PT-' + Date.now().toString().slice(-6),
+          id: 'PT-' + crypto.randomUUID(),
           name: '',
           phone: '',
           dob: '',
@@ -310,6 +320,8 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
         });
       }
 
+      setRecordIssues([]);
+      setSharedPhoneAcknowledged(false);
       setActiveTab(initialTab || 'demographics');
     }
   }, [isOpen, patient?.id, initialTab]);
@@ -323,6 +335,22 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
       });
     }
   }, [activeTab, formData.name, formData.phone, formData.medications]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const frame = requestAnimationFrame(() => dialogRef.current?.querySelector<HTMLElement>('button, input')?.focus());
+    const handleKeyboard = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); onCloseRef.current(); return; }
+      if (event.key !== 'Tab') return;
+      const controls = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]') || []).filter(el => el.getClientRects().length > 0);
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener('keydown', handleKeyboard);
+    return () => { cancelAnimationFrame(frame); document.removeEventListener('keydown', handleKeyboard); previousFocus?.focus(); };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -521,24 +549,26 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
     onShowToast(lang === 'ar' ? 'تم حذف الصورة' : 'Scan removed', 'info');
   };
 
-  const handleSave = () => {
-    if (!formData.name.trim()) {
-      setActiveTab('demographics');
-      onShowToast(lang === 'ar' ? 'يرجى إدخال اسم المريض' : 'Please enter patient name', 'error');
-      return;
-    }
-    if (!formData.phone.trim()) {
-      setActiveTab('demographics');
-      onShowToast(lang === 'ar' ? 'يرجى إدخال رقم الهاتف' : 'Please enter phone number', 'error');
-      return;
-    }
+  const duplicates = duplicatePhonePatients(formData, patients);
 
-    const cleanMeds = formData.medications.filter(m => m.name.trim());
+
+  const handleSave = () => {
+    const issues = validatePatientRecord(formData);
+    if (duplicates.length && !sharedPhoneAcknowledged) issues.push({ field: 'phone', tab: 'demographics', en: 'Review the matching records and acknowledge the shared phone number before saving.', ar: 'راجع الملفات المطابقة وأكد مشاركة رقم الهاتف قبل الحفظ.' });
+    setRecordIssues(issues);
+    if (issues.length) {
+      setActiveTab(issues[0].tab);
+      requestAnimationFrame(() => document.getElementById(`record-${issues[0].field}`)?.focus());
+      return;
+    }
     const finalPatient: Patient = {
       ...formData,
-      medications: cleanMeds,
+      name: formData.name.trim().replace(/\s+/g, ' '),
+      phone: normalizeDigits(formData.phone).trim(),
+      allergies: formData.allergies?.trim(),
+      familyTag: formData.familyTag?.trim(),
+      medications: formData.medications.filter(m => m.name.trim()).map(m => ({ ...m, name: m.name.trim() })),
     };
-
     onSavePatient(finalPatient);
     onClose();
   };
@@ -547,10 +577,10 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/80">
-      <div className="bg-surface border border-stroke rounded-[4px] max-w-4xl w-full overflow-hidden flex flex-col max-h-[92vh]">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="patient-record-title" className="bg-surface border border-stroke rounded-[4px] max-w-4xl w-full overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Top Header */}
         <div className="p-4 bg-subtle border-b border-stroke flex items-center justify-between">
-          <div className="font-extrabold text-base text-fg flex items-center gap-2">
+          <div id="patient-record-title" className="font-semibold text-base text-fg flex items-center gap-2">
             <FileText className="w-5 h-5 text-brand" />
             <span>
               {formData.name
@@ -562,11 +592,24 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
           </div>
           <button
             onClick={onClose}
+            aria-label={lang === 'ar' ? 'إغلاق ملف المريض' : 'Close patient record'}
             className="p-1 rounded-[4px] text-neutral-400 hover:text-fg hover:bg-neutral-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        <section aria-label={lang === 'ar' ? 'ملخص الملف' : 'Record summary'} className="border-b border-stroke px-4 py-2 text-xs space-y-1.5">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted">
+            <span className="font-mono break-all">{formData.id}</span>
+            <span>{lang === 'ar' ? 'الأدوية المسجلة:' : 'Recorded medications:'} <strong className="font-mono text-fg">{formData.medications.filter(m => m.name.trim()).length}</strong></span>
+            <span>{lang === 'ar' ? 'المتابعات المفتوحة:' : 'Open follow-ups:'} <strong className="font-mono text-fg">{followUps.filter(f => f.patientId === formData.id && !f.resolved).length}</strong></span>
+          </div>
+          <div className={`flex items-start gap-2 p-2 border rounded-[4px] ${formData.allergies?.trim() ? 'bg-brand-subtle border-brand text-fg' : 'bg-warning-bg border-warning-border text-warning-fg'}`}>
+            <ShieldAlert className="size-4 shrink-0" />
+            <span><strong>{lang === 'ar' ? 'الحساسيات:' : 'Allergies:'}</strong> {formData.allergies?.trim() || (lang === 'ar' ? 'غير مسجلة — تحقق مع المريض قبل الصرف.' : 'Not recorded — verify with the patient before dispensing.')}</span>
+          </div>
+        </section>
 
         {/* Dossier Tabs */}
         <div className="bg-surface border-b border-stroke px-4 flex items-center gap-1 overflow-x-auto text-xs font-semibold">
@@ -595,6 +638,16 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
 
         {/* Tab Body */}
         <div className="p-5 overflow-y-auto space-y-4 text-xs flex-1">
+          {recordIssues.length > 0 && <div id="record-errors" role="alert" className="bg-critical-bg text-critical-fg border border-critical-border rounded-[4px] p-3 space-y-1">
+            <p className="font-semibold">{lang === 'ar' ? 'صحح البيانات التالية قبل الحفظ:' : 'Correct these fields before saving:'}</p>
+            <ul className="list-disc ps-4">{recordIssues.map((issue, i) => <li key={`${issue.field}-${i}`}><button className="text-start underline underline-offset-2" onClick={() => { setActiveTab(issue.tab); requestAnimationFrame(() => document.getElementById(`record-${issue.field}`)?.focus()); }}>{lang === 'ar' ? issue.ar : issue.en}</button></li>)}</ul>
+          </div>}
+          {duplicates.length > 0 && <div className="bg-warning-bg text-warning-fg border border-warning-border rounded-[4px] p-3 space-y-2">
+            <p className="font-semibold">{lang === 'ar' ? 'رقم الهاتف مستخدم في ملفات أخرى' : 'This phone number matches existing records'}</p>
+            <p>{lang === 'ar' ? 'افتح الملف الصحيح لتجنب التكرار. يمكن لأفراد العائلة مشاركة الرقم بعد التأكيد.' : 'Open the correct record to avoid a duplicate. Family members can share a number after acknowledgement.'}</p>
+            <div className="flex flex-wrap gap-2">{duplicates.map(p => <button key={p.id} className="underline font-semibold underline-offset-2 break-all text-start" onClick={() => onOpenExistingPatient(p.id)}>{p.name} · {p.id}{p.isArchived ? (lang === 'ar' ? ' (مؤرشف)' : ' (archived)') : ''}</button>)}</div>
+            <label className="flex items-start gap-2"><input type="checkbox" checked={sharedPhoneAcknowledged} onChange={e => setSharedPhoneAcknowledged(e.target.checked)} />{lang === 'ar' ? 'راجعت الملفات وأؤكد أن مشاركة الرقم مقصودة.' : 'I reviewed these records and confirm this shared number is intentional.'}</label>
+          </div>}
           {/* TAB: RECHARTS LONGITUDINAL ADHERENCE & VITALS VISUALIZATION */}
           {activeTab === 'analytics' && (
             <PatientAdherenceVitalsChart
@@ -632,7 +685,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                       onClose();
                       onOpenHouseholdModal(formData.familyTag!);
                     }}
-                    className="px-3 py-1.5 rounded-[4px] bg-blue-600 hover:bg-brand-subtle0 text-fg font-bold text-xs transition-colors whitespace-nowrap"
+                    className="px-3 py-1.5 rounded-[4px] bg-brand hover:bg-brand-hover text-on-brand font-bold text-xs transition-colors whitespace-nowrap"
                   >
                     {lang === 'ar' ? 'توحيد صرف العائلة ⚡' : 'Household Sync ⚡'}
                   </button>
@@ -641,11 +694,14 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="font-semibold text-neutral-300">
+                  <label htmlFor="record-name" className="font-semibold text-neutral-300">
                     {lang === 'ar' ? 'الاسم الكامل للمريض *' : 'Full Name *'}
                   </label>
                   <input
                     type="text"
+                    id="record-name"
+                    aria-describedby={recordIssues.length ? 'record-errors' : undefined}
+                    aria-invalid={recordIssues.some(issue => issue.field === 'name')}
                     value={formData.name}
                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                     placeholder={lang === 'ar' ? 'مثال: أحمد عبد الله الجبوري' : 'e.g. John Doe'}
@@ -655,13 +711,16 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-neutral-300">
+                  <label htmlFor="record-phone" className="font-semibold text-neutral-300">
                     {lang === 'ar' ? 'رقم الهاتف (مع رمز الدولة لـ WhatsApp / SMS) *' : 'Phone (WhatsApp/SMS) *'}
                   </label>
                   <input
                     type="tel"
+                    id="record-phone"
+                    aria-describedby={recordIssues.length ? 'record-errors' : undefined}
+                    aria-invalid={recordIssues.some(issue => issue.field === 'phone')}
                     value={formData.phone}
-                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={e => { setSharedPhoneAcknowledged(false); setFormData({ ...formData, phone: e.target.value }); }}
                     placeholder="07700000000 / +964..."
                     className="w-full bg-canvas border border-stroke text-fg rounded-[4px] p-2.5 outline-none focus:border-brand font-mono"
                     required
@@ -669,11 +728,15 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-neutral-300">
+                  <label htmlFor="record-dob" className="font-semibold text-neutral-300">
                     {lang === 'ar' ? 'تاريخ الميلاد' : 'Date of Birth'}
                   </label>
                   <input
                     type="date"
+                    id="record-dob"
+                    aria-describedby={recordIssues.length ? 'record-errors' : undefined}
+                    aria-invalid={recordIssues.some(issue => issue.field === 'dob')}
+                    max={localDateKey()}
                     value={formData.dob || ''}
                     onChange={handleDobChange}
                     className="w-full bg-canvas border border-stroke text-fg rounded-[4px] p-2.5 outline-none focus:border-brand font-mono"
@@ -686,10 +749,11 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-neutral-300">
+                  <label htmlFor="record-gender" className="font-semibold text-neutral-300">
                     {lang === 'ar' ? 'الجنس' : 'Gender'}
                   </label>
                   <select
+                    id="record-gender"
                     value={formData.gender || 'M'}
                     onChange={e => setFormData({ ...formData, gender: e.target.value as any })}
                     className="w-full bg-canvas border border-stroke text-fg rounded-[4px] p-2.5 outline-none focus:border-brand"
@@ -700,11 +764,12 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-neutral-300">
+                  <label htmlFor="record-family" className="font-semibold text-neutral-300">
                     {lang === 'ar' ? 'رمز العائلة (Family Tag)' : 'Family Tag'}
                   </label>
                   <input
                     type="text"
+                    id="record-family"
                     value={formData.familyTag || ''}
                     onChange={e => setFormData({ ...formData, familyTag: e.target.value })}
                     placeholder={lang === 'ar' ? 'مثال: عائلة_الجبوري' : 'e.g. Smith_Family'}
@@ -713,12 +778,13 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-neutral-300">
+                  <label htmlFor="record-loyalty" className="font-semibold text-neutral-300">
                     {lang === 'ar' ? 'نقاط الولاء (Loyalty Points)' : 'Loyalty Points'}
                   </label>
                   <input
                     type="number"
                     min={0}
+                    id="record-loyalty"
                     value={formData.loyaltyPoints || 0}
                     onChange={e => setFormData({ ...formData, loyaltyPoints: parseInt(e.target.value, 10) || 0 })}
                     className="w-full bg-canvas border border-stroke text-fg rounded-[4px] p-2.5 outline-none focus:border-brand font-mono font-bold"
@@ -727,25 +793,29 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-critical-fg">
+                <label htmlFor="record-allergies" className="font-semibold text-critical-fg">
                   {lang === 'ar' ? 'الحساسيات الدوائية المعروفة (Allergies)' : 'Known Drug Allergies'}
                 </label>
                 <input
                   type="text"
-                  value={formData.allergies || ''}
+                  id="record-allergies"
+                    value={formData.allergies || ''}
                   onChange={e => setFormData({ ...formData, allergies: e.target.value })}
                   placeholder="مثال: Penicillin, Sulfa, Aspirin..."
                   className="w-full bg-canvas border border-critical-border text-critical-fg rounded-[4px] p-2.5 outline-none focus:border-critical-border"
                 />
               </div>
 
+              <button type="button" className="text-brand underline underline-offset-2 text-xs" onClick={() => setFormData({ ...formData, allergies: lang === 'ar' ? 'لا توجد حساسيات دوائية معروفة' : 'No known drug allergies' })}>{lang === 'ar' ? 'تأكيد عدم وجود حساسيات دوائية معروفة' : 'Confirm no known drug allergies'}</button>
+
               <div className="space-y-1">
-                <label className="font-semibold text-neutral-300">
+                <label htmlFor="record-notes" className="font-semibold text-neutral-300">
                   {lang === 'ar' ? 'التاريخ المرضي والملاحظات السريرية' : 'Clinical History & Medical Notes'}
                 </label>
                 <textarea
                   rows={3}
-                  value={formData.notes || ''}
+                  id="record-notes"
+                    value={formData.notes || ''}
                   onChange={e => setFormData({ ...formData, notes: e.target.value })}
                   placeholder={lang === 'ar' ? 'تاريخ الإصابة، أمراض مصاحبة (ضغط، سكري، كلى)...' : 'Medical history, chronic conditions, special notes...'}
                   className="w-full bg-canvas border border-stroke text-fg rounded-[4px] p-2.5 outline-none focus:border-brand"
@@ -765,7 +835,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                 <button
                   type="button"
                   onClick={handleAddMedication}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-[4px] bg-blue-600 hover:bg-brand-subtle0 text-fg font-bold text-xs"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-[4px] bg-brand hover:bg-brand-hover text-on-brand font-bold text-xs"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>{lang === 'ar' ? 'إضافة دواء' : 'Add Medication'}</span>
@@ -794,6 +864,10 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                         <label className="text-[10px] text-neutral-400 font-semibold">{lang === 'ar' ? 'اسم الدواء (العلامة التجارية)' : 'Brand Name'}</label>
                         <input
                           type="text"
+                          id={`record-med-${idx}-name`}
+                          aria-label={`${lang === 'ar' ? 'الدواء' : 'Medication name'} ${idx + 1}`}
+                          aria-describedby={recordIssues.length ? 'record-errors' : undefined}
+                    aria-invalid={recordIssues.some(issue => issue.field === `med-${idx}-name`)}
                           value={m.name}
                           onChange={e => handleMedChange(idx, 'name', e.target.value)}
                           placeholder="Glucophage, Concor, Lipitor..."
@@ -805,20 +879,29 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                         <label className="text-[10px] text-neutral-400 font-semibold">{lang === 'ar' ? 'تاريخ آخر صرف' : 'Last Dispense'}</label>
                         <input
                           type="date"
+                          id={`record-med-${idx}-date`}
+                          aria-label={`${lang === 'ar' ? 'الدواء' : 'Last dispense date'} ${idx + 1}`}
+                          aria-describedby={recordIssues.length ? 'record-errors' : undefined}
+                    aria-invalid={recordIssues.some(issue => issue.field === `med-${idx}-date`)}
                           value={m.lastDispenseDate}
+                          max={localDateKey()}
                           onChange={e => handleMedChange(idx, 'lastDispenseDate', e.target.value)}
                           className="w-full bg-surface border border-stroke p-2 rounded-[4px] text-fg text-xs font-mono outline-none focus:border-brand"
                         />
                       </div>
 
                       <div className="sm:col-span-3 space-y-1">
-                        <label className="text-[10px] text-neutral-400 font-semibold">{lang === 'ar' ? 'الكمية (أيام / حبات)' : 'Supply (Days/Tabs)'}</label>
+                        <label className="text-[10px] text-neutral-400 font-semibold">{lang === 'ar' ? 'مدة الصرف بالأيام' : 'Supply (days)'}</label>
                         <input
                           type="number"
                           min={1}
                           max={365}
+                          id={`record-med-${idx}-supply`}
+                          aria-label={`${lang === 'ar' ? 'الدواء' : 'Supply in days'} ${idx + 1}`}
+                          aria-describedby={recordIssues.length ? 'record-errors' : undefined}
+                    aria-invalid={recordIssues.some(issue => issue.field === `med-${idx}-supply`)}
                           value={m.daysSupply}
-                          onChange={e => handleMedChange(idx, 'daysSupply', parseInt(e.target.value, 10) || 30)}
+                          onChange={e => handleMedChange(idx, 'daysSupply', e.target.value === '' ? 0 : Number(e.target.value))}
                           className="w-full bg-surface border border-stroke p-2 rounded-[4px] text-fg text-xs font-bold text-center outline-none focus:border-brand"
                         />
                       </div>
@@ -907,7 +990,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                 <button
                   type="button"
                   onClick={handleAddVitals}
-                  className="px-4 py-2 rounded-[4px] bg-blue-600 hover:bg-brand-subtle0 text-fg font-bold text-xs transition-colors"
+                  className="px-4 py-2 rounded-[4px] bg-brand hover:bg-brand-hover text-on-brand font-bold text-xs transition-colors"
                 >
                   {lang === 'ar' ? '🩺 حفظ القراءة السريرية' : 'Log Clinical Entry'}
                 </button>
@@ -980,7 +1063,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                     type="file"
                     accept="image/*"
                     onChange={handleScanUpload}
-                    className="block w-full text-xs text-neutral-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-[4px] file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-fg hover:file:bg-brand-subtle0 cursor-pointer"
+                    className="block w-full text-xs text-neutral-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-[4px] file:border-0 file:text-xs file:font-bold file:bg-brand file:text-fg hover:file:bg-brand-subtle cursor-pointer"
                   />
                 </div>
                 <div className="flex items-center justify-between text-[11px] text-neutral-400 flex-wrap gap-2">
@@ -1167,7 +1250,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                       const clean = formatPhoneForWhatsApp(formData.phone);
                       window.open(`https://wa.me/${clean}?text=${encodeURIComponent(thermalSlipText)}`, '_blank');
                     }}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-[4px] bg-success-bg hover:bg-success-bg0 text-fg text-xs font-semibold"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-[4px] bg-success-bg hover:bg-success-bg text-fg text-xs font-semibold"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
                     <span>WhatsApp</span>
@@ -1176,7 +1259,7 @@ export const PatientDossierModal: React.FC<PatientDossierModalProps> = ({
                   <button
                     type="button"
                     onClick={() => window.print()}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-[4px] bg-blue-600 hover:bg-brand-subtle0 text-fg text-xs font-semibold"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-[4px] bg-brand hover:bg-brand-hover text-on-brand text-xs font-semibold"
                   >
                     <Printer className="w-3.5 h-3.5" />
                     <span>{lang === 'ar' ? 'طباعة إيصال' : 'Print Slip'}</span>

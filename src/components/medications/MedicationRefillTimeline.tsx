@@ -122,11 +122,11 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
   const getStatusBadgeStyle = (pattern: typeof analysis.overallPattern) => {
     switch (pattern) {
       case 'optimal':
-        return 'bg-success-bg0/10 text-success-fg border-success-border';
+        return 'bg-success-bg text-success-fg border-success-border';
       case 'mild-irregular':
-        return 'bg-warning-bg0/10 text-warning-fg border-warning-border';
+        return 'bg-warning-bg text-warning-fg border-warning-border';
       case 'severe-irregular':
-        return 'bg-critical-bg0/10 text-critical-fg border-critical-border';
+        return 'bg-critical-bg text-critical-fg border-critical-border';
       case 'early-overuse':
         return 'bg-purple-500/10 text-purple-400 border-purple-500/30';
       default:
@@ -175,7 +175,7 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
             <button
               type="button"
               onClick={() => setShowAddForm(prev => !prev)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-[4px] bg-blue-600/20 hover:bg-blue-600 text-brand hover:text-fg border border-brand text-[11px] font-bold transition-colors duration-150 cursor-pointer"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-[4px] bg-brand/20 hover:bg-brand text-brand hover:text-fg border border-brand text-[11px] font-bold transition-colors duration-150 cursor-pointer"
             >
               <Plus className="w-3 h-3" />
               <span>{lang === 'ar' ? 'إضافة صرف سابق' : 'Add Past Refill'}</span>
@@ -293,7 +293,7 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                   </button>
                   <button
                     type="submit"
-                    className="px-3 py-1 rounded bg-blue-600 hover:bg-brand-subtle0 text-fg text-xs font-bold"
+                    className="px-3 py-1 rounded bg-brand hover:bg-brand-hover text-on-brand text-xs font-bold"
                   >
                     {lang === 'ar' ? 'حفظ الصرف السابق' : 'Save Event'}
                   </button>
@@ -311,7 +311,7 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                 const nextEvent = analysis.events[idx + 1];
 
                 // Gap status color styling
-                let gapColor = 'border-success-border bg-success-bg0';
+                let gapColor = 'border-success-border bg-success-bg';
                 let gapTextColor = 'text-success-fg';
                 let gapBg = 'bg-success-bg border-success-border';
 
@@ -320,7 +320,7 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                   gapTextColor = 'text-warning-fg';
                   gapBg = 'bg-warning-bg border-warning-border';
                 } else if (event.status === 'moderate-gap' || event.status === 'critical-gap') {
-                  gapColor = 'border-critical-border bg-critical-bg0';
+                  gapColor = 'border-critical-border bg-critical-bg';
                   gapTextColor = 'text-critical-fg';
                   gapBg = 'bg-critical-bg border-critical-border';
                 } else if (event.status === 'early') {
@@ -337,7 +337,7 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                       <div
                         className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold border mb-1 flex items-center gap-1 ${
                           isLast
-                            ? 'bg-brand-subtle0/20 text-brand border-brand'
+                            ? 'bg-brand-subtle text-brand border-brand'
                             : 'bg-neutral-800 text-neutral-300 border-neutral-700'
                         }`}
                       >
@@ -355,7 +355,7 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                       <div
                         className={`w-9 h-9 rounded-[4px] flex items-center justify-center font-bold text-xs border-2  transition-transform group-hover:scale-105 z-10 ${
                           isLast
-                            ? 'bg-blue-600 text-fg border-brand shadow-blue-900/50 ring-4 ring-blue-500/20'
+                            ? 'bg-brand text-on-brand border-brand shadow-blue-900/50 ring-4 ring-blue-500/20'
                             : 'bg-subtle text-neutral-200 border-neutral-500'
                         }`}
                       >
@@ -382,7 +382,7 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                         <button
                           type="button"
                           onClick={() => handleRemoveRefill(event.date)}
-                          className="opacity-0 group-hover:opacity-100 p-1 rounded-[4px] bg-critical-bg hover:bg-critical-bg0 text-fg text-[9px] absolute -top-1 right-2 transition-opacity shadow cursor-pointer"
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded-[4px] bg-critical-bg hover:bg-critical-bg text-fg text-[9px] absolute -top-1 right-2 transition-opacity shadow cursor-pointer"
                           title={lang === 'ar' ? 'حذف هذا التاريخ' : 'Remove this date'}
                         >
                           <Trash2 className="w-2.5 h-2.5" />
@@ -475,8 +475,8 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                           <div
                             className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold border mb-1 flex items-center gap-1 ${
                               analysis.isOverdueForRefill
-                                ? 'bg-critical-bg0/20 text-critical-fg border-critical-border'
-                                : 'bg-brand-subtle0/10 text-brand border-brand'
+                                ? 'bg-critical-bg text-critical-fg border-critical-border'
+                                : 'bg-brand-subtle text-brand border-brand'
                             }`}
                           >
                             <Clock className="w-2.5 h-2.5" />

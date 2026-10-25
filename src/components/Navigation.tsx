@@ -61,7 +61,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       labelEn: 'Clinical Follow-Up',
       icon: <Stethoscope className="w-4 h-4" />,
       badge: activeFollowUpsCount,
-      badgeColor: 'bg-warning-bg0/20 text-warning-fg border border-warning-border',
+      badgeColor: 'bg-warning-bg text-warning-fg border border-warning-border',
     },
     {
       id: 'timeline',
@@ -69,7 +69,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       labelEn: 'Refill Timeline',
       icon: <BellRing className="w-4 h-4" />,
       badge: dueRefillsCount,
-      badgeColor: 'bg-critical-bg0/20 text-critical-fg border border-critical-border',
+      badgeColor: 'bg-critical-bg text-critical-fg border border-critical-border',
     },
     {
       id: 'inventory',

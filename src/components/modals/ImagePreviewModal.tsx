@@ -390,7 +390,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                 type="button"
                 onClick={handleDownload}
                 title={lang === 'ar' ? 'تحميل الصورة الأصلية بالدقة الكاملة' : 'Download Original High-Res Image'}
-                className="p-2 rounded-[4px] bg-blue-600/30 hover:bg-blue-600 text-brand hover:text-fg border border-brand transition-colors flex items-center gap-1.5 text-xs font-bold"
+                className="p-2 rounded-[4px] bg-brand/30 hover:bg-brand text-brand hover:text-fg border border-brand transition-colors flex items-center gap-1.5 text-xs font-bold"
               >
                 <Download className="w-4 h-4" />
                 <span className="hidden sm:inline">{lang === 'ar' ? 'تحميل الأصل' : 'Download'}</span>
@@ -458,7 +458,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
             </div>
           ) : (
             <div className="text-center text-neutral-400 text-xs space-y-4 max-w-md p-6 bg-neutral-900/80 rounded-[4px] border border-neutral-800">
-              <div className="w-14 h-14 rounded-[4px] bg-warning-bg0/10 border border-warning-border flex items-center justify-center mx-auto text-warning-fg">
+              <div className="w-14 h-14 rounded-[4px] bg-warning-bg border border-warning-border flex items-center justify-center mx-auto text-warning-fg">
                 <AlertCircle className="w-7 h-7" />
               </div>
               <div>
@@ -478,7 +478,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isReuploading}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-[4px] bg-blue-600 hover:bg-brand-subtle0 text-fg font-bold text-xs shadow-blue-600/25 transition-colors duration-150"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-[4px] bg-brand hover:bg-brand-hover text-on-brand font-bold text-xs shadow-blue-600/25 transition-colors duration-150"
                 >
                   {isReuploading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

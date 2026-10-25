@@ -436,58 +436,31 @@ export default function App() {
   };
 
   const handleExecuteRefill = (patientId: string, medIndices: number[], daysSupply: number) => {
+    const patient = patientsRef.current.find(p => p.id === patientId && !p.isArchived);
+    if (!patient || !Number.isInteger(daysSupply) || daysSupply < 1 || daysSupply > 365) return;
+    const indices = new Set(medIndices.filter(index => Number.isInteger(index) && patient.medications[index]));
+    if (!indices.size) return;
     const today = formatYMD(new Date());
-    const refilledDrugNames: string[] = [];
-    let updatedPatientInstance: Patient | null = null;
-
-    setPatients(prev => {
-      return prev.map(p => {
-        if (p.id !== patientId) return p;
-
-        const updatedMeds = p.medications.map((m, idx) => {
-          if (medIndices.includes(idx)) {
-            refilledDrugNames.push(m.name);
-            const history = Array.isArray(m.refillHistory) ? [...m.refillHistory] : [];
-            // Preserve previous dispense date before updating lastDispenseDate to today
-            if (m.lastDispenseDate && !history.some(r => (typeof r === 'string' ? r : r.date) === m.lastDispenseDate)) {
-              history.push({
-                id: `rf-${Date.now()}-${idx}`,
-                date: m.lastDispenseDate,
-                daysSupply: m.daysSupply || 30,
-              });
-            }
-            return {
-              ...m,
-              lastDispenseDate: today,
-              daysSupply: daysSupply,
-              refillHistory: history,
-            };
-          }
-          return m;
-        });
-
-        const points = daysSupply >= 90 ? 30 : daysSupply >= 30 ? 10 : 0;
-
-        const updated: Patient = {
-          ...p,
-          medications: updatedMeds,
-          loyaltyPoints: (Number(p.loyaltyPoints) || 0) + points,
-        };
-        updatedPatientInstance = updated;
-        return updated;
-      });
-    });
-
-    showToast(
-      lang === 'ar'
-        ? `تم صرف (${refilledDrugNames.join(', ')}) وحفظ نمط (${daysSupply} يوم/حبة)!`
-        : `Refilled (${refilledDrugNames.join(', ')}) for ${daysSupply} days`,
-      'success'
-    );
-
-    if (settings.gasUrl && updatedPatientInstance) {
-      savePatientToGoogleSheet(settings.gasUrl, updatedPatientInstance).catch(console.warn);
-    }
+    const updated: Patient = {
+      ...patient,
+      medications: patient.medications.map((med, index) => {
+        if (!indices.has(index)) return med;
+        const history = [...(med.refillHistory || [])];
+        if (med.lastDispenseDate && !history.some(record => (typeof record === 'string' ? record : record.date) === med.lastDispenseDate)) {
+          history.push({ id: crypto.randomUUID(), date: med.lastDispenseDate, daysSupply: med.daysSupply });
+        }
+        const event = { id: crypto.randomUUID(), date: today, daysSupply, note: 'Dispensed from refill workflow' };
+        const existing = history.findIndex(record => (typeof record === 'string' ? record : record.date) === today);
+        if (existing >= 0) history[existing] = event;
+        else history.push(event);
+        return { ...med, lastDispenseDate: today, daysSupply, refillHistory: history };
+      }),
+      loyaltyPoints: (Number(patient.loyaltyPoints) || 0) + (daysSupply >= 90 ? 30 : daysSupply >= 30 ? 10 : 0),
+    };
+    patientsRef.current = patientsRef.current.map(p => p.id === patientId ? updated : p);
+    setPatients(patientsRef.current);
+    showToast(lang === 'ar' ? 'تم تسجيل الصرف وتحديث قائمة العمل' : 'Dispensing recorded; work queue updated', 'success');
+    if (settings.gasUrl) savePatientToGoogleSheet(settings.gasUrl, updated).catch(console.warn);
   };
 
   const handleApplyHouseholdAlignment = (rows: HouseholdMemberAlignment[]) => {
@@ -545,21 +518,13 @@ export default function App() {
   };
 
   const handleResolveFollowUp = (id: string) => {
-    let resolvedItem: FollowUpEntry | undefined;
-    setFollowUps(prev =>
-      prev.map(f => {
-        if (f.id === id) {
-          resolvedItem = { ...f, resolved: true, resolvedAt: new Date().toISOString() };
-          return resolvedItem;
-        }
-        return f;
-      })
-    );
+    const current = followUpsRef.current.find(f => f.id === id);
+    if (!current || current.resolved) return;
+    const resolvedItem = { ...current, resolved: true, resolvedAt: new Date().toISOString() };
+    followUpsRef.current = followUpsRef.current.map(f => f.id === id ? resolvedItem : f);
+    setFollowUps(followUpsRef.current);
     showToast(lang === 'ar' ? 'تم توثيق اكتمال المتابعة بنجاح' : 'Follow-up marked as resolved', 'success');
-
-    if (settings.gasUrl && resolvedItem) {
-      saveFollowUpToGoogleSheet(settings.gasUrl, resolvedItem).catch(console.warn);
-    }
+    if (settings.gasUrl) saveFollowUpToGoogleSheet(settings.gasUrl, resolvedItem).catch(console.warn);
   };
 
   const handleDeleteFollowUp = (id: string) => {
@@ -753,7 +718,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-canvas text-on-brand font-sans flex flex-col antialiased selection:bg-brand selection:text-on-brand">
+    <div className="min-h-screen bg-canvas text-fg font-sans flex flex-col antialiased selection:bg-brand selection:text-on-brand">
       {/* Toast Notification */}
       {toast && (
         <div
@@ -812,9 +777,8 @@ export default function App() {
             lang={lang}
             onOpenPatientModal={handleOpenPatientModal}
             onOpenRefillModal={handleOpenRefillModal}
-            onOpenHouseholdModal={handleOpenHouseholdModal}
             onOpenFollowUpModal={() => setIsFollowUpModalOpen(true)}
-            onUpdatePatient={handleSavePatient}
+            onResolveFollowUp={handleResolveFollowUp}
             onShowToast={showToast}
           />
         )}
@@ -904,6 +868,8 @@ export default function App() {
         isOpen={isDossierOpen}
         onClose={() => setIsDossierOpen(false)}
         patient={selectedPatientForDossier}
+        patients={patients}
+        onOpenExistingPatient={handleOpenPatientModal}
         initialTab={dossierInitialTab}
         followUps={followUps}
         pharmacyName={settings.pharmacyName}

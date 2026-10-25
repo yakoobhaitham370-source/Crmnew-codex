@@ -134,7 +134,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="flex items-center justify-between flex-wrap gap-2">
               <label className="text-xs font-semibold text-neutral-300 flex items-center gap-1.5">
                 <span>{lang === 'ar' ? 'رابط Google Apps Script Web App URL' : 'Google Apps Script Web App URL'}</span>
-                <span className="px-1.5 py-0.5 rounded bg-brand-subtle0/20 text-brand text-[10px] font-mono">/exec</span>
+                <span className="px-1.5 py-0.5 rounded bg-brand-subtle text-brand text-[10px] font-mono">/exec</span>
               </label>
               <div className="flex items-center gap-2">
                 <button
@@ -219,7 +219,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <button
                     type="button"
                     onClick={handleFixDevUrl}
-                    className="mr-6 px-3 py-1 bg-warning-bg0 hover:bg-warning-bg text-black font-bold text-[11px] rounded transition-colors"
+                    className="mr-6 px-3 py-1 bg-warning-bg hover:bg-warning-bg text-black font-bold text-[11px] rounded transition-colors"
                   >
                     {lang === 'ar' ? '⚡ تحويل الرابط تلقائياً إلى /exec' : 'Auto-fix URL to /exec'}
                   </button>
@@ -390,13 +390,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             {/* Modal Header */}
             <div className="p-4 border-b border-stroke flex items-center justify-between bg-canvas">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-[4px] bg-warning-bg0/10 border border-warning-border text-warning-fg">
+                <div className="p-2 rounded-[4px] bg-warning-bg border border-warning-border text-warning-fg">
                   <Code className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="font-extrabold text-sm text-fg flex items-center gap-2">
                     <span>{lang === 'ar' ? 'كود Google Apps Script السريع (Code.gs)' : 'Fast Google Apps Script Backend (Code.gs)'}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-success-bg0/20 text-success-fg font-bold border border-success-border">
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-success-bg text-success-fg font-bold border border-success-border">
                       الإصدار 4.0.0 Ultra-Fast
                     </span>
                   </div>
@@ -421,7 +421,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 onClick={() => setScriptModalTab('code')}
                 className={`py-3 px-4 text-xs font-bold border-b-2 transition-colors flex items-center gap-2 ${
                   scriptModalTab === 'code'
-                    ? 'border-warning-border text-warning-fg bg-warning-bg0/5'
+                    ? 'border-warning-border text-warning-fg bg-warning-bg'
                     : 'border-transparent text-neutral-400 hover:text-neutral-200'
                 }`}
               >
@@ -434,7 +434,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 onClick={() => setScriptModalTab('instructions')}
                 className={`py-3 px-4 text-xs font-bold border-b-2 transition-colors flex items-center gap-2 ${
                   scriptModalTab === 'instructions'
-                    ? 'border-brand text-brand bg-brand-subtle0/5'
+                    ? 'border-brand text-brand bg-brand-subtle'
                     : 'border-transparent text-neutral-400 hover:text-neutral-200'
                 }`}
               >
@@ -447,7 +447,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 onClick={() => setScriptModalTab('faq')}
                 className={`py-3 px-4 text-xs font-bold border-b-2 transition-colors flex items-center gap-2 ${
                   scriptModalTab === 'faq'
-                    ? 'border-success-border text-success-fg bg-success-bg0/5'
+                    ? 'border-success-border text-success-fg bg-success-bg'
                     : 'border-transparent text-neutral-400 hover:text-neutral-200'
                 }`}
               >
@@ -485,7 +485,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           setCopiedCode(true);
                           setTimeout(() => setCopiedCode(false), 2500);
                         }}
-                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-[4px] bg-blue-600 hover:bg-brand-subtle0 text-fg font-bold text-xs shadow transition-colors cursor-pointer"
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-[4px] bg-brand hover:bg-brand-hover text-on-brand font-bold text-xs shadow transition-colors cursor-pointer"
                       >
                         {copiedCode ? <Check className="w-3.5 h-3.5 text-success-fg" /> : <Copy className="w-3.5 h-3.5" />}
                         <span>{copiedCode ? (lang === 'ar' ? 'تم نسخ الكود!' : 'Copied!') : (lang === 'ar' ? 'نسخ الكود' : 'Copy Code')}</span>
@@ -519,7 +519,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <div className="space-y-3">
                     <div className="p-3.5 bg-neutral-900 border border-neutral-800 rounded-[4px] space-y-1">
                       <div className="font-bold text-fg flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-[4px] bg-blue-600 text-fg text-[11px] flex items-center justify-center font-bold">1</span>
+                        <span className="w-5 h-5 rounded-[4px] bg-brand text-on-brand text-[11px] flex items-center justify-center font-bold">1</span>
                         <span>{lang === 'ar' ? 'افتح جدول Google Sheet:' : 'Open Google Sheet:'}</span>
                       </div>
                       <p className="text-neutral-400 text-xs mr-7">
@@ -531,7 +531,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
                     <div className="p-3.5 bg-neutral-900 border border-neutral-800 rounded-[4px] space-y-1">
                       <div className="font-bold text-fg flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-[4px] bg-blue-600 text-fg text-[11px] flex items-center justify-center font-bold">2</span>
+                        <span className="w-5 h-5 rounded-[4px] bg-brand text-on-brand text-[11px] flex items-center justify-center font-bold">2</span>
                         <span>{lang === 'ar' ? 'افتح محرر Apps Script:' : 'Open Apps Script:'}</span>
                       </div>
                       <p className="text-neutral-400 text-xs mr-7">
@@ -543,7 +543,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
                     <div className="p-3.5 bg-neutral-900 border border-neutral-800 rounded-[4px] space-y-1">
                       <div className="font-bold text-fg flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-[4px] bg-blue-600 text-fg text-[11px] flex items-center justify-center font-bold">3</span>
+                        <span className="w-5 h-5 rounded-[4px] bg-brand text-on-brand text-[11px] flex items-center justify-center font-bold">3</span>
                         <span>{lang === 'ar' ? 'لصق الكود وحفظه:' : 'Paste & Save Code:'}</span>
                       </div>
                       <p className="text-neutral-400 text-xs mr-7">
@@ -555,14 +555,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
                     <div className="p-3.5 bg-warning-bg border border-warning-border rounded-[4px] space-y-2">
                       <div className="font-bold text-warning-fg flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-[4px] bg-warning-bg0 text-black text-[11px] flex items-center justify-center font-bold">4</span>
+                        <span className="w-5 h-5 rounded-[4px] bg-warning-bg text-black text-[11px] flex items-center justify-center font-bold">4</span>
                         <span>{lang === 'ar' ? 'نشر تطبيق الويب (New Deployment):' : 'Deploy as Web App:'}</span>
                       </div>
                       <div className="mr-7 space-y-1.5 text-neutral-300 text-xs">
                         <p>• اضغط في أعلى اليمين على <strong>Deploy (نشر)</strong> &gt; <strong>New deployment (نشر جديد)</strong>.</p>
                         <p>• اختر <strong>Web app (تطبيق ويب)</strong>.</p>
                         <p>• في <strong>Execute as</strong> اختر: <strong className="text-fg">Me (أنا)</strong>.</p>
-                        <p className="p-2 rounded bg-warning-bg0/20 border border-warning-border text-warning-fg font-bold">
+                        <p className="p-2 rounded bg-warning-bg border border-warning-border text-warning-fg font-bold">
                           ⚠️ في خانة "Who has access" اختر: "Anyone" (أي شخص).
                         </p>
                       </div>
@@ -570,7 +570,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
                     <div className="p-3.5 bg-neutral-900 border border-neutral-800 rounded-[4px] space-y-1">
                       <div className="font-bold text-fg flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-[4px] bg-blue-600 text-fg text-[11px] flex items-center justify-center font-bold">5</span>
+                        <span className="w-5 h-5 rounded-[4px] bg-brand text-on-brand text-[11px] flex items-center justify-center font-bold">5</span>
                         <span>{lang === 'ar' ? 'منح الإذن ونسخ الرابط:' : 'Authorize & Copy URL:'}</span>
                       </div>
                       <p className="text-neutral-400 text-xs mr-7">
@@ -626,7 +626,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <button
                 type="button"
                 onClick={() => setShowScriptModal(false)}
-                className="px-5 py-1.5 rounded-[4px] bg-blue-600 hover:bg-brand-subtle0 text-fg text-xs font-bold transition-colors cursor-pointer"
+                className="px-5 py-1.5 rounded-[4px] bg-brand hover:bg-brand-hover text-on-brand text-xs font-bold transition-colors cursor-pointer"
               >
                 {lang === 'ar' ? 'إغلاق' : 'Close'}
               </button>
@@ -741,7 +741,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           setShowScriptModal(true);
                           setScriptModalTab('faq');
                         }}
-                        className="px-3.5 py-2 rounded-[4px] bg-warning-bg hover:bg-warning-bg0 text-black font-bold text-xs flex items-center gap-1.5 transition-colors"
+                        className="px-3.5 py-2 rounded-[4px] bg-warning-bg hover:bg-warning-bg text-black font-bold text-xs flex items-center gap-1.5 transition-colors"
                       >
                         <HelpCircle className="w-4 h-4" />
                         <span>{lang === 'ar' ? 'عرض حلول المشكلات في الدليل' : 'View Troubleshooting'}</span>

@@ -69,8 +69,8 @@ export const RefillModal: React.FC<RefillModalProps> = ({
   };
 
   const handleExecute = () => {
-    if (selectedIndices.length === 0) return;
-    onExecuteRefill(patient.id, selectedIndices, Number(daysCount) || 30);
+    if (selectedIndices.length === 0 || !Number.isInteger(daysCount) || daysCount < 1 || daysCount > 365) return;
+    onExecuteRefill(patient.id, selectedIndices, daysCount);
     onClose();
   };
 
@@ -187,10 +187,12 @@ export const RefillModal: React.FC<RefillModalProps> = ({
             })}
           </div>
 
+          <div className={`p-2 border rounded-[4px] ${patient.allergies?.trim() ? 'border-brand bg-brand-subtle' : 'border-warning-border bg-warning-bg text-warning-fg'}`}><strong>{lang === 'ar' ? 'الحساسيات:' : 'Allergies:'}</strong> {patient.allergies?.trim() || (lang === 'ar' ? 'غير مسجلة — تحقق مع المريض قبل الصرف.' : 'Not recorded — verify with the patient before dispensing.')}</div>
+
           {/* Days Supply Input */}
           <div className="space-y-2 pt-2 border-t border-stroke">
             <label className="font-bold text-neutral-300 block">
-              {lang === 'ar' ? 'مدة التكرار المحددة (عدد الأيام / الحبات):' : 'Dispense Duration (Days / Tablets):'}
+              {lang === 'ar' ? 'مدة الصرف بالأيام:' : 'Dispense duration (days):'}
             </label>
             <div className="flex items-center gap-3">
               <input
@@ -198,12 +200,15 @@ export const RefillModal: React.FC<RefillModalProps> = ({
                 min={1}
                 max={365}
                 value={daysCount}
-                onChange={e => setDaysCount(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                aria-label={lang === 'ar' ? 'مدة الصرف بالأيام' : 'Dispense duration in days'}
+                aria-invalid={!Number.isInteger(daysCount) || daysCount < 1 || daysCount > 365}
+                onChange={e => setDaysCount(Number(e.target.value))}
                 className="w-32 bg-canvas border border-stroke text-fg text-base font-extrabold text-center rounded-[4px] p-2 outline-none focus:border-brand"
               />
-              <span className="font-bold text-neutral-300">{lang === 'ar' ? 'يوم / حبة' : 'Days / Tablets'}</span>
+              <span className="font-bold text-neutral-300">{lang === 'ar' ? 'يوم' : 'Days'}</span>
             </div>
 
+            {(!Number.isInteger(daysCount) || daysCount < 1 || daysCount > 365) && <p role="alert" className="text-critical-fg">{lang === 'ar' ? 'أدخل عدداً صحيحاً من ١ إلى ٣٦٥ يوماً.' : 'Enter a whole number from 1 to 365 days.'}</p>}
             {/* Quick chips */}
             <div className="flex items-center gap-1.5 flex-wrap pt-1">
               <span className="text-[11px] text-neutral-400">{lang === 'ar' ? 'اختصارات سريعة:' : 'Quick Presets:'}</span>
@@ -223,7 +228,7 @@ export const RefillModal: React.FC<RefillModalProps> = ({
                   onClick={() => setDaysCount(chip.d)}
                   className={`px-2 py-1 rounded-md text-[11px] font-bold border transition-colors ${
                     daysCount === chip.d
-                      ? 'bg-blue-600 text-fg border-brand'
+                      ? 'bg-brand text-on-brand border-brand'
                       : 'bg-neutral-800 text-neutral-300 border-neutral-700 hover:bg-neutral-700'
                   }`}
                 >
@@ -246,8 +251,8 @@ export const RefillModal: React.FC<RefillModalProps> = ({
           <button
             type="button"
             onClick={handleExecute}
-            disabled={selectedIndices.length === 0}
-            className="flex items-center gap-2 px-5 py-2 rounded-[4px] bg-success-bg hover:bg-success-bg0 text-fg text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
+            disabled={selectedIndices.length === 0 || !Number.isInteger(daysCount) || daysCount < 1 || daysCount > 365}
+            className="flex items-center gap-2 px-5 py-2 rounded-[4px] bg-success-bg hover:bg-success-bg text-fg text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
           >
             <Check className="w-4 h-4" />
             <span>

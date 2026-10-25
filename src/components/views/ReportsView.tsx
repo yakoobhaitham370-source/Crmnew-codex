@@ -69,7 +69,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ patients, lang }) => {
       {/* Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-surface border border-stroke rounded-[4px] p-5 relative overflow-hidden flex flex-col justify-between">
-          <div className="absolute top-0 right-0 left-0 h-1 bg-success-bg0" />
+          <div className="absolute top-0 right-0 left-0 h-1 bg-success-bg" />
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
               {lang === 'ar' ? 'متوسط الالتزام الدوائي العام (PDC)' : 'Average Proportion of Days Covered'}
@@ -83,7 +83,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ patients, lang }) => {
         </div>
 
         <div className="bg-surface border border-stroke rounded-[4px] p-5 relative overflow-hidden flex flex-col justify-between">
-          <div className="absolute top-0 right-0 left-0 h-1 bg-warning-bg0" />
+          <div className="absolute top-0 right-0 left-0 h-1 bg-warning-bg" />
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
               {lang === 'ar' ? 'نقاط الولاء الممنوحة' : 'Total Loyalty Stars Awarded'}
@@ -97,7 +97,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ patients, lang }) => {
         </div>
 
         <div className="bg-surface border border-stroke rounded-[4px] p-5 relative overflow-hidden flex flex-col justify-between">
-          <div className="absolute top-0 right-0 left-0 h-1 bg-brand-subtle0" />
+          <div className="absolute top-0 right-0 left-0 h-1 bg-brand-subtle" />
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
               {lang === 'ar' ? 'صرف شهري كامل (Full Boxes)' : '30+ Day Dispensing Events'}
@@ -120,7 +120,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ patients, lang }) => {
           </div>
           <div className="flex items-center gap-3 text-xs font-medium">
             <span className="flex items-center gap-1.5 text-brand">
-              <span className="w-3 h-3 rounded-[4px] bg-brand-subtle0 inline-block" />
+              <span className="w-3 h-3 rounded-[4px] bg-brand-subtle inline-block" />
               <span>Systolic (الانقباضي)</span>
             </span>
             <span className="flex items-center gap-1.5 text-teal-400">
@@ -163,7 +163,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ patients, lang }) => {
                         {/* Systolic Bar */}
                         <div
                           style={{ height: `${sysHeight}%` }}
-                          className="w-2.5 bg-brand-subtle0 rounded-t transition-colors duration-150 group-hover:brightness-125"
+                          className="w-2.5 bg-brand-subtle rounded-t transition-colors duration-150 group-hover:brightness-125"
                           title={`Systolic: ${pt.sys} mmHg`}
                         />
                         {/* Diastolic Bar */}

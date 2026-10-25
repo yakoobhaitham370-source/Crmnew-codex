@@ -114,7 +114,7 @@ export const FollowUpView: React.FC<FollowUpViewProps> = ({
               onClick={() => setFilterType(f.id)}
               className={`px-3 py-1.5 rounded-[4px] text-xs font-semibold whitespace-nowrap transition-colors ${
                 filterType === f.id
-                  ? 'bg-warning-bg0/20 text-warning-fg border border-warning-border'
+                  ? 'bg-warning-bg text-warning-fg border border-warning-border'
                   : 'bg-neutral-800 text-neutral-400 hover:text-fg'
               }`}
             >
@@ -252,7 +252,7 @@ export const FollowUpView: React.FC<FollowUpViewProps> = ({
                           <button
                             onClick={() => handleSendSMS(item)}
                             title={lang === 'ar' ? 'إرسال استفسار سريري عبر SMS' : 'Send SMS'}
-                            className="p-1.5 rounded-[4px] bg-blue-600/20 hover:bg-blue-600 text-brand hover:text-fg border border-brand transition-colors"
+                            className="p-1.5 rounded-[4px] bg-brand/20 hover:bg-brand text-brand hover:text-fg border border-brand transition-colors"
                           >
                             <Send className="w-3.5 h-3.5" />
                           </button>

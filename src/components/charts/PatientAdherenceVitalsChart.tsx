@@ -251,7 +251,7 @@ export const PatientAdherenceVitalsChart: React.FC<PatientAdherenceVitalsChartPr
               <button
                 type="button"
                 onClick={onOpenNewFollowUp}
-                className="text-[10px] font-bold px-2 py-1 rounded bg-blue-600 hover:bg-brand-subtle0 text-fg flex items-center gap-1 transition-colors cursor-pointer"
+                className="text-[10px] font-bold px-2 py-1 rounded bg-brand hover:bg-brand-hover text-on-brand flex items-center gap-1 transition-colors cursor-pointer"
               >
                 <Plus className="w-3 h-3" />
                 <span>{lang === 'ar' ? 'متابعة جديدة' : 'New Log'}</span>
@@ -280,7 +280,7 @@ export const PatientAdherenceVitalsChart: React.FC<PatientAdherenceVitalsChartPr
               onClick={() => setChartMode('combined')}
               className={`px-2.5 py-1 rounded-md transition-colors ${
                 chartMode === 'combined'
-                  ? 'bg-blue-600 text-fg font-bold '
+                  ? 'bg-brand text-on-brand font-bold '
                   : 'text-neutral-400 hover:text-fg '
               }`}
             >
@@ -302,7 +302,7 @@ export const PatientAdherenceVitalsChart: React.FC<PatientAdherenceVitalsChartPr
               onClick={() => setChartMode('blood_pressure')}
               className={`px-2.5 py-1 rounded-md transition-colors ${
                 chartMode === 'blood_pressure'
-                  ? 'bg-blue-600 text-fg font-bold '
+                  ? 'bg-brand text-on-brand font-bold '
                   : 'text-neutral-400 hover:text-fg '
               }`}
             >

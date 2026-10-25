@@ -211,7 +211,7 @@ export const HouseholdSyncModal: React.FC<HouseholdSyncModalProps> = ({
           <button
             type="button"
             onClick={handleSendWhatsApp}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-[4px] bg-success-bg hover:bg-success-bg0 text-fg text-xs font-bold transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-[4px] bg-success-bg hover:bg-success-bg text-fg text-xs font-bold transition-colors cursor-pointer"
           >
             <MessageSquare className="w-3.5 h-3.5" />
             <span>{lang === 'ar' ? 'إرسال رسالة العائلة WhatsApp' : 'Send WhatsApp to Family'}</span>
@@ -228,7 +228,7 @@ export const HouseholdSyncModal: React.FC<HouseholdSyncModalProps> = ({
             <button
               type="button"
               onClick={handleApply}
-              className="flex items-center gap-1.5 px-5 py-2 rounded-[4px] bg-blue-600 hover:bg-brand-subtle0 text-fg text-xs font-bold transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-[4px] bg-brand hover:bg-brand-hover text-on-brand text-xs font-bold transition-colors cursor-pointer"
             >
               <Check className="w-4 h-4" />
               <span>{lang === 'ar' ? 'اعتماد وتجديد تواريخ العائلة' : 'Apply & Sync Dates'}</span>

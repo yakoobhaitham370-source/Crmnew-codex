@@ -90,7 +90,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                 onClick={() => setFilterDays(r.days)}
                 className={`px-3 py-1.5 rounded-[4px] text-xs font-bold transition-colors ${
                   filterDays === r.days
-                    ? 'bg-critical-bg0/20 text-critical-fg border border-critical-border'
+                    ? 'bg-critical-bg text-critical-fg border border-critical-border'
                     : 'bg-neutral-800 text-neutral-400 hover:text-fg'
                 }`}
               >

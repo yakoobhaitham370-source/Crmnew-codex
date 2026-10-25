@@ -41,13 +41,13 @@ export const ResetDatabaseModal: React.FC<ResetDatabaseModalProps> = ({
         {/* Header */}
         <div className="p-4 border-b border-stroke flex items-center justify-between bg-surface">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-[4px] bg-critical-bg0/10 border border-critical-border text-critical-fg">
+            <div className="p-2.5 rounded-[4px] bg-critical-bg border border-critical-border text-critical-fg">
               <AlertTriangle className="w-5 h-5 text-critical-fg" />
             </div>
             <div>
               <h2 className="font-extrabold text-sm text-fg flex items-center gap-2">
                 <span>{lang === 'ar' ? 'تفريغ قاعدة البيانات وحذف السجلات' : 'Reset & Empty Database'}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-critical-bg0/20 text-critical-fg font-bold border border-critical-border">
+                <span className="text-[10px] px-2 py-0.5 rounded bg-critical-bg text-critical-fg font-bold border border-critical-border">
                   {lang === 'ar' ? 'إجراء لا رجعة فيه' : 'Irreversible Action'}
                 </span>
               </h2>
@@ -115,7 +115,7 @@ export const ResetDatabaseModal: React.FC<ResetDatabaseModalProps> = ({
                   type="button"
                   onClick={() => onConfirmReset(true)}
                   disabled={isResetting}
-                  className="w-full text-right p-3.5 rounded-[4px] bg-critical-bg hover:bg-critical-bg0 text-fg font-bold transition-colors duration-150 shadow-rose-950/40 border border-critical-border flex items-start gap-3 group disabled:opacity-60 cursor-pointer"
+                  className="w-full text-right p-3.5 rounded-[4px] bg-critical-bg hover:bg-critical-bg text-fg font-bold transition-colors duration-150 shadow-rose-950/40 border border-critical-border flex items-start gap-3 group disabled:opacity-60 cursor-pointer"
                 >
                   <div className="p-2 rounded-[4px] bg-critical-bg text-fg shrink-0 mt-0.5">
                     {isResetting ? (
@@ -167,7 +167,7 @@ export const ResetDatabaseModal: React.FC<ResetDatabaseModalProps> = ({
                 type="button"
                 onClick={() => onConfirmReset(false)}
                 disabled={isResetting}
-                className="w-full py-3 px-4 rounded-[4px] bg-critical-bg hover:bg-critical-bg0 text-fg font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-60 cursor-pointer"
+                className="w-full py-3 px-4 rounded-[4px] bg-critical-bg hover:bg-critical-bg text-fg font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-60 cursor-pointer"
               >
                 {isResetting ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />

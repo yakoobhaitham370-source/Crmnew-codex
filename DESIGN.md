@@ -11,3 +11,11 @@ Use a compact Microsoft Fluent UI v9 visual language implemented with Tailwind C
 - Every control needs hover, active, disabled and visible keyboard focus states. Respect reduced motion.
 - Preserve Arabic RTL and English LTR layouts. Tables align to the reading direction and scroll within their own container. Header actions wrap at narrow widths.
 - Preserve clinical calculations, data, action handlers and existing workflows when styling components. No invented patient data or integration claims.
+
+## Daily work queue
+
+The dashboard is an operational queue, with date and task-type filters, not a collection of metric cards. Each named medication refill and clinical follow-up is one task. Date ranges are overdue, today, days 1–7 ahead, and completed today. Counts reflect the current search and task type. Completed refills require an explicit history event; opening a patient or a reminder never completes a task. Exclude archived patients and invalid medication schedules; flag invalid records for review. Use local calendar dates and refresh the current day on focus and while open.
+
+Patient records validate identity fields, dates and supply lengths before saving. Shared phone numbers require explicit acknowledgement and show matching active and archived records. Keep allergies visible across record tabs and in the refill dialog. An empty allergy field means not recorded; only an explicit entry means no known allergies. Preserve the existing local storage and optional Google Apps Script integration.
+
+Validation: `npm test`, `npm run lint`, `npm run build`. Browser smoke checks cover queue filters, selected-medication refill, confirmed follow-up completion, persistence after reload, duplicate acknowledgement, invalid record input, both themes, Arabic RTL and narrow screens.

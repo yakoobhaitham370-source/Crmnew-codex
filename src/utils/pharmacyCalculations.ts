@@ -118,7 +118,7 @@ export function generateThermalSlipText(patient: Patient, pharmacyName: string):
   lines.push(`AGE/SEX:   ${patient.age || '—'} Y / ${patient.gender || '—'}`);
   lines.push(`FAMILY:    ${patient.familyTag || 'N/A'}`);
   lines.push(`LOYALTY:   ⭐ ${patient.loyaltyPoints || 0} Points`);
-  lines.push(`ALLERGIES: ${patient.allergies || 'NIL / NONE REPORTED'}`);
+  lines.push(`ALLERGIES: ${patient.allergies?.trim() || 'NOT RECORDED — VERIFY WITH PATIENT'}`);
   lines.push('--------------------------------------------------');
   lines.push('ACTIVE CHRONIC REGIMEN:');
   if (patient.medications && patient.medications.length > 0) {
