@@ -203,97 +203,97 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="fluent-dashboard space-y-3">
       {/* Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 fluent-metrics">
         {/* Metric 1: Active Patients */}
-        <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="absolute top-0 right-0 left-0 h-1 bg-[#0f6cbd]" />
+        <div className="bg-surface border border-stroke rounded-[4px] p-3 relative overflow-hidden flex flex-col justify-between">
+          <div className="absolute top-0 right-0 left-0 h-1 bg-brand" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-neutral-400 light:text-neutral-500 uppercase tracking-wider">
+            <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
               {lang === 'ar' ? 'إجمالي المرضى النشطين' : 'Active Chronic Patients'}
             </span>
-            <Users className="w-5 h-5 text-blue-400" />
+            <Users className="w-5 h-5 text-brand" />
           </div>
-          <div className="text-3xl font-extrabold text-white light:text-neutral-900 mt-2">
+          <div className="text-3xl font-extrabold text-fg mt-2">
             {activePatients.length}
           </div>
-          <div className="text-xs text-neutral-500 light:text-neutral-400 mt-1">
+          <div className="text-xs text-neutral-500 mt-1">
             {lang === 'ar' ? 'مسجلون في برامج الصرف المستمر' : 'Enrolled in refill programs'}
           </div>
         </div>
 
         {/* Metric 2: Follow Ups Due */}
-        <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="absolute top-0 right-0 left-0 h-1 bg-amber-500" />
+        <div className="bg-surface border border-stroke rounded-[4px] p-3 relative overflow-hidden flex flex-col justify-between">
+          <div className="absolute top-0 right-0 left-0 h-1 bg-warning-bg0" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-neutral-400 light:text-neutral-500 uppercase tracking-wider">
+            <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
               {lang === 'ar' ? 'متابعات سريرية ومضادات' : 'Clinical Follow-Ups'}
             </span>
-            <Stethoscope className="w-5 h-5 text-amber-400" />
+            <Stethoscope className="w-5 h-5 text-warning-fg" />
           </div>
-          <div className="text-3xl font-extrabold text-amber-400 mt-2">
+          <div className="text-3xl font-extrabold text-warning-fg mt-2">
             {pendingFollowUps.length}
           </div>
-          <div className="text-xs text-neutral-500 light:text-neutral-400 mt-1">
+          <div className="text-xs text-neutral-500 mt-1">
             {lang === 'ar' ? 'مضادات يوم 3/7 ورعاية مزمنة' : 'Day 3/7 Stewardship checks'}
           </div>
         </div>
 
         {/* Metric 3: Due Refills */}
-        <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="absolute top-0 right-0 left-0 h-1 bg-rose-500" />
+        <div className="bg-surface border border-stroke rounded-[4px] p-3 relative overflow-hidden flex flex-col justify-between">
+          <div className="absolute top-0 right-0 left-0 h-1 bg-critical-bg0" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-neutral-400 light:text-neutral-500 uppercase tracking-wider">
+            <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
               {lang === 'ar' ? 'مستحقو الصرف (خلال 3 أيام)' : 'Refills Due (≤ 3 Days)'}
             </span>
-            <Clock className="w-5 h-5 text-rose-400" />
+            <Clock className="w-5 h-5 text-critical-fg" />
           </div>
-          <div className="text-3xl font-extrabold text-rose-400 mt-2">
+          <div className="text-3xl font-extrabold text-critical-fg mt-2">
             {dueRefillsCount}
           </div>
-          <div className="text-xs text-neutral-500 light:text-neutral-400 mt-1">
+          <div className="text-xs text-neutral-500 mt-1">
             {lang === 'ar' ? 'بحاجة لتكرار الوصفة فوراً' : 'Require prompt dispensing'}
           </div>
         </div>
 
         {/* Metric 4: Dropouts */}
-        <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="absolute top-0 right-0 left-0 h-1 bg-orange-500" />
+        <div className="bg-surface border border-stroke rounded-[4px] p-3 relative overflow-hidden flex flex-col justify-between">
+          <div className="absolute top-0 right-0 left-0 h-1 bg-warning-bg0" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-neutral-400 light:text-neutral-500 uppercase tracking-wider">
+            <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
               {lang === 'ar' ? 'المنقطعون عن العلاج (> 14 يوم)' : 'Therapy Dropouts (>14d)'}
             </span>
-            <UserX className="w-5 h-5 text-orange-400" />
+            <UserX className="w-5 h-5 text-warning-fg" />
           </div>
-          <div className="text-3xl font-extrabold text-orange-400 mt-2">
+          <div className="text-3xl font-extrabold text-warning-fg mt-2">
             {dropoutsCount}
           </div>
-          <div className="text-xs text-neutral-500 light:text-neutral-400 mt-1">
+          <div className="text-xs text-neutral-500 mt-1">
             {lang === 'ar' ? 'خطر انتكاس الحالة السريرية' : 'High non-adherence risk'}
           </div>
         </div>
       </div>
 
       {/* Universal Search & Demand Forecast */}
-      <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl p-5 shadow-sm space-y-4">
+      <div className="bg-surface border border-stroke rounded-[4px] p-3 space-y-3">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="font-bold text-base text-white light:text-neutral-900 flex items-center gap-2">
-            <Search className="w-5 h-5 text-blue-400" />
+          <div className="font-semibold text-sm text-fg flex items-center gap-2">
+            <Search className="w-5 h-5 text-brand" />
             <span>{lang === 'ar' ? 'البحث المباشر والاستعلام السريري الذكي' : 'Universal Search & Demand Query'}</span>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={onOpenFollowUpModal}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#1e3a5f] hover:bg-[#284b77] text-blue-300 border border-[#0f6cbd]/40 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-xs font-semibold bg-brand-subtle hover:bg-hover text-brand border border-brand transition-colors"
             >
               <Stethoscope className="w-3.5 h-3.5" />
               <span>{lang === 'ar' ? 'تسجيل متابعة / مضاد' : 'Add Follow-Up'}</span>
             </button>
             <button
               onClick={() => onOpenPatientModal()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#0f6cbd] hover:bg-[#115ea3] text-white transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-xs font-semibold bg-brand hover:bg-brand-hover text-on-brand transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>{lang === 'ar' ? 'تسجيل مريض جديد' : 'New Patient'}</span>
@@ -302,9 +302,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         <div className="relative">
-          <Search className="w-4 h-4 text-neutral-400 absolute right-3 top-3" />
+          <Search className="w-4 h-4 text-neutral-400 absolute right-3 top-2.5" />
           <input
-            type="text"
+            type="search"
+            aria-label={lang === 'ar' ? 'البحث عن المرضى والأدوية' : 'Search patients and medications'}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder={
@@ -312,12 +313,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 ? 'ابحث باسم المريض، رقم الهاتف، الدواء (مثال: Glucophage, Lipitor, Concor)، أو رمز العائلة...'
                 : 'Search patient name, phone, medication brand, or family tag...'
             }
-            className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 text-sm rounded-lg px-9 py-2.5 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+            className="w-full bg-canvas border border-stroke text-fg text-sm rounded-[4px] px-9 py-2 outline-none focus:border-brand focus:ring-1 focus:ring-blue-500 transition-colors duration-150"
           />
           {searchQuery && (
             <button
+              aria-label={lang === 'ar' ? 'مسح البحث' : 'Clear search'}
               onClick={() => setSearchQuery('')}
-              className="absolute left-3 top-2.5 text-xs text-neutral-400 hover:text-white px-1.5 py-0.5 rounded bg-neutral-800"
+              className="absolute left-3 top-2.5 text-xs text-neutral-400 hover:text-fg px-1.5 py-0.5 rounded bg-neutral-800"
             >
               ✕
             </button>
@@ -326,9 +328,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         {/* Demand Forecast Banner */}
         {searchQuery && totalDemandMatches > 0 && (
-          <div className="bg-blue-950/40 border border-blue-600/40 rounded-lg p-3 text-xs text-blue-200 flex items-center justify-between gap-3 animate-fade-in">
+          <div className="bg-brand-subtle border border-brand rounded-[4px] p-3 text-xs text-brand flex items-center justify-between gap-3 animate-fade-in">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-blue-400 shrink-0" />
+              <TrendingUp className="w-4 h-4 text-brand shrink-0" />
               <div>
                 <strong>{lang === 'ar' ? 'توقع الطلب السريري:' : 'Clinical Demand Forecast:'}</strong>{' '}
                 {lang === 'ar'
@@ -336,7 +338,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   : `There are ${totalDemandMatches} active patients matching this query, with an estimated upcoming requirement of ${totalDemandMatches} packs.`}
               </div>
             </div>
-            <span className="font-extrabold text-blue-300 bg-blue-900/60 px-2 py-1 rounded text-xs shrink-0">
+            <span className="font-extrabold text-brand bg-brand-subtle px-2 py-1 rounded text-xs shrink-0">
               {totalDemandMatches} {lang === 'ar' ? 'حالة نشطة' : 'Patients'}
             </span>
           </div>
@@ -344,15 +346,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* Priority Dispatch Room */}
-      <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-[#383838] light:border-neutral-200 flex items-center justify-between">
-          <div className="font-bold text-base text-white light:text-neutral-900 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-amber-400" />
+      <div className="bg-surface border border-stroke rounded-[4px] overflow-hidden">
+        <div className="section-header border-b border-stroke flex items-center justify-between">
+          <div className="font-semibold text-sm text-fg flex items-center gap-2">
+            <Zap className="w-5 h-5 text-warning-fg" />
             <span>{lang === 'ar' ? 'غرفة الإرسال السريع وتكرار الصرف المخصص' : 'Priority Dispatch & Granular Refill Hub'}</span>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-blue-950/60 text-blue-300 border border-blue-700/50">
+            <span className="text-xs px-2.5 py-1 rounded-[4px] font-bold bg-brand-subtle text-brand border border-brand">
               {dispatchRows.length} {lang === 'ar' ? 'حالة مستحقة' : 'Due'}
             </span>
           </div>
@@ -360,8 +362,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-right dir-rtl text-xs">
-            <thead className="bg-[#292929] light:bg-neutral-100 text-neutral-300 light:text-neutral-700 font-bold border-b border-[#383838] light:border-neutral-200">
+          <table className="w-full text-start text-xs">
+            <thead className="bg-subtle text-neutral-300 font-bold border-b border-stroke">
               <tr>
                 <th className="py-3 px-4">{lang === 'ar' ? 'المريض' : 'Patient'}</th>
                 <th className="py-3 px-3">{lang === 'ar' ? 'العائلة' : 'Family'}</th>
@@ -373,12 +375,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <th className="py-3 px-4 text-center">{lang === 'ar' ? 'الإجراءات السريعة' : 'Quick Actions'}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2e2e2e] light:divide-neutral-200 text-neutral-200 light:text-neutral-800">
+            <tbody className="divide-y divide-stroke text-neutral-200">
               {activePatients.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="text-center py-12 text-neutral-400">
-                    <div className="max-w-md mx-auto space-y-2">
-                      <div className="font-bold text-sm text-neutral-300 light:text-neutral-700">
+                    <div className="dispatch-empty max-w-md mx-auto space-y-2">
+                      <div className="font-bold text-sm text-neutral-300">
                         {lang === 'ar' ? 'غرفة الإرسال فارغة حالياً' : 'Dispatch Hub is Empty'}
                       </div>
                       <p className="text-xs text-neutral-500 max-w-sm mx-auto">
@@ -388,7 +390,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       </p>
                       <button
                         onClick={() => onOpenPatientModal()}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#0f6cbd] hover:bg-[#115ea3] text-white transition-all mt-2 cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-xs font-bold bg-brand hover:bg-brand-hover text-on-brand transition-colors duration-150 mt-2 cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>{lang === 'ar' ? 'تسجيل مريض جديد' : 'New Patient'}</span>
@@ -414,13 +416,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   return (
                     <tr
                       key={p.id}
-                      className="hover:bg-neutral-800/40 light:hover:bg-neutral-50 transition-colors"
+                      className="hover:bg-neutral-800/40 transition-colors"
                     >
                       {/* Name */}
-                      <td className="py-3.5 px-4 font-bold text-white light:text-neutral-900">
+                      <td className="py-3.5 px-4 font-bold text-fg">
                         <button
                           onClick={() => onOpenPatientModal(p.id)}
-                          className="hover:text-blue-400 text-right underline-offset-2 hover:underline transition-colors"
+                          className="hover:text-brand text-right underline-offset-2 hover:underline transition-colors"
                         >
                           {p.name}
                         </button>
@@ -432,7 +434,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           <button
                             onClick={() => onOpenHouseholdModal(p.familyTag!)}
                             title={lang === 'ar' ? 'انقر لتوحيد صرف أفراد العائلة معاً' : 'Sync family refills'}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-950/60 text-blue-300 border border-blue-700/50 hover:bg-blue-900 transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[11px] font-bold bg-brand-subtle text-brand border border-brand hover:bg-brand-subtle transition-colors cursor-pointer"
                           >
                             <span>👨‍👩‍👧‍👦</span>
                             <span>{p.familyTag}</span>
@@ -443,7 +445,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       </td>
 
                       {/* Phone */}
-                      <td className="py-3.5 px-3 font-mono text-neutral-300 light:text-neutral-600">
+                      <td className="py-3.5 px-3 font-mono text-neutral-300">
                         {p.phone}
                       </td>
 
@@ -454,15 +456,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             const isOverdue = dm.daysRemaining < 0;
                             return (
                               <div key={idx} className="flex items-center gap-1.5 flex-wrap">
-                                <span className="font-semibold text-white light:text-neutral-900">
+                                <span className="font-semibold text-fg">
                                   • {dm.name}
                                 </span>
                                 {isOverdue ? (
-                                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-rose-950/70 text-rose-400 border border-rose-800/40">
+                                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-critical-bg text-critical-fg border border-critical-border">
                                     {lang === 'ar' ? `متأخر ${Math.abs(dm.daysRemaining)} يوم` : `${Math.abs(dm.daysRemaining)}d overdue`}
                                   </span>
                                 ) : (
-                                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-950/70 text-amber-400 border border-amber-800/40">
+                                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-warning-bg text-warning-fg border border-warning-border">
                                     {lang === 'ar' ? `مستحق بعد ${dm.daysRemaining} يوم` : `due in ${dm.daysRemaining}d`}
                                   </span>
                                 )}
@@ -473,7 +475,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       </td>
 
                       {/* Next Due Date */}
-                      <td className="py-3.5 px-3 font-mono text-xs font-semibold text-neutral-300 light:text-neutral-700">
+                      <td className="py-3.5 px-3 font-mono text-xs font-semibold text-neutral-300">
                         {formatYMD(row.earliestDueDate)}
                       </td>
 
@@ -482,8 +484,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         <span
                           className={`inline-block font-extrabold px-2 py-0.5 rounded text-[11px] ${
                             row.pdc >= 80
-                              ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-700/50'
-                              : 'bg-rose-950/60 text-rose-400 border border-rose-700/50'
+                              ? 'bg-success-bg text-success-fg border border-success-border'
+                              : 'bg-critical-bg text-critical-fg border border-critical-border'
                           }`}
                         >
                           {row.pdc}%
@@ -494,8 +496,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       <td className="py-3.5 px-3">
                         {isSentToday ? (
                           <div className="flex flex-col gap-0.5">
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">
-                              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded bg-success-bg text-success-fg border border-success-border">
+                              <CheckCircle2 className="w-3 h-3 text-success-fg" />
                               <span>{lang === 'ar' ? 'تم التذكير اليوم' : 'Sent Today'}</span>
                             </span>
                             <span className="text-[10px] text-neutral-400">
@@ -506,11 +508,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             </span>
                           </div>
                         ) : row.isDropout ? (
-                          <span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded bg-rose-950 text-rose-400 border border-rose-800">
+                          <span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded bg-critical-bg text-critical-fg border border-critical-border">
                             {lang === 'ar' ? 'منقطع (>14 يوم)' : 'Dropout'}
                           </span>
                         ) : (
-                          <span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800">
+                          <span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded bg-warning-bg text-warning-fg border border-warning-border">
                             {lang === 'ar' ? 'مستحق التكرار' : 'Due Now'}
                           </span>
                         )}
@@ -523,7 +525,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           <button
                             onClick={() => handleSendWhatsApp(row)}
                             title={lang === 'ar' ? 'إرسال تذكير مخصص عبر WhatsApp للأدوية المستحقة' : 'Send WhatsApp Reminder'}
-                            className="p-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-600/40 transition-colors"
+                            className="p-1.5 rounded-[4px] bg-success-bg hover:bg-success-bg text-success-fg hover:text-fg border border-success-border transition-colors"
                           >
                             <MessageSquare className="w-3.5 h-3.5" />
                           </button>
@@ -532,7 +534,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           <button
                             onClick={() => handleSendSMS(row)}
                             title={lang === 'ar' ? 'إرسال رسالة SMS نصية' : 'Send SMS'}
-                            className="p-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-600/40 transition-colors"
+                            className="p-1.5 rounded-[4px] bg-blue-600/20 hover:bg-blue-600 text-brand hover:text-fg border border-brand transition-colors"
                           >
                             <Send className="w-3.5 h-3.5" />
                           </button>
@@ -540,17 +542,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           {/* Refill Button */}
                           <button
                             onClick={() => onOpenRefillModal(p.id)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#0f6cbd] hover:bg-[#115ea3] text-white font-bold text-xs shadow-sm transition-colors"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-[4px] bg-brand hover:bg-brand-hover text-on-brand font-bold text-xs transition-colors"
                             title={lang === 'ar' ? 'تكرار صرف الأدوية المحددة وحفظ النمط' : 'Refill Medications'}
                           >
-                            <Zap className="w-3 h-3 text-amber-300" />
+                            <Zap className="w-3 h-3 text-warning-fg" />
                             <span>{lang === 'ar' ? 'صرف' : 'Refill'}</span>
                           </button>
 
                           {/* Dossier */}
                           <button
                             onClick={() => onOpenPatientModal(p.id)}
-                            className="p-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border border-neutral-700 transition-colors"
+                            className="p-1.5 rounded-[4px] bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border border-neutral-700 transition-colors"
                             title={lang === 'ar' ? 'فتح الملف السريري الكامل' : 'Open Dossier'}
                           >
                             <FileText className="w-3.5 h-3.5" />

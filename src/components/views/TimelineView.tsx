@@ -62,14 +62,14 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl p-5 shadow-sm space-y-4">
+      <div className="bg-surface border border-stroke rounded-[4px] p-5 space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <div className="font-extrabold text-lg text-white light:text-neutral-900 flex items-center gap-2">
-              <BellRing className="w-5 h-5 text-rose-400" />
+            <div className="font-extrabold text-lg text-fg flex items-center gap-2">
+              <BellRing className="w-5 h-5 text-critical-fg" />
               <span>{lang === 'ar' ? 'جدول المواعيد والمراجعات الدوائية التفصيلي' : 'Refill Chronology Timeline'}</span>
             </div>
-            <p className="text-xs text-neutral-400 light:text-neutral-500 mt-1">
+            <p className="text-xs text-neutral-400 mt-1">
               {lang === 'ar'
                 ? 'عرض زمني تفصيلي لمواعيد نفاد كل صنف دوائي بدقة لكل مريض، لإتاحة صرف الصنف الفردي أو الحزمة الكاملة.'
                 : 'Granular view of when each specific chronic medication expires across all patients.'}
@@ -88,10 +88,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
               <button
                 key={r.days}
                 onClick={() => setFilterDays(r.days)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                className={`px-3 py-1.5 rounded-[4px] text-xs font-bold transition-colors ${
                   filterDays === r.days
-                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                    : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                    ? 'bg-critical-bg0/20 text-critical-fg border border-critical-border'
+                    : 'bg-neutral-800 text-neutral-400 hover:text-fg'
                 }`}
               >
                 {lang === 'ar' ? r.labelAr : r.labelEn}
@@ -102,10 +102,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
       </div>
 
       {/* Timeline Table */}
-      <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-surface border border-stroke rounded-[4px] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-right dir-rtl text-xs">
-            <thead className="bg-[#292929] light:bg-neutral-100 text-neutral-300 light:text-neutral-700 font-bold border-b border-[#383838]">
+            <thead className="bg-subtle text-neutral-300 font-bold border-b border-stroke">
               <tr>
                 <th className="py-3 px-4">{lang === 'ar' ? 'تاريخ الاستحقاق' : 'Due Date'}</th>
                 <th className="py-3 px-4">{lang === 'ar' ? 'المريض' : 'Patient'}</th>
@@ -115,7 +115,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                 <th className="py-3 px-4 text-center">{lang === 'ar' ? 'إجراء الصرف' : 'Refill Action'}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2e2e2e] light:divide-neutral-200 text-neutral-200 light:text-neutral-800">
+            <tbody className="divide-y divide-stroke text-neutral-200">
               {timelineItems.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center py-12 text-neutral-400">
@@ -128,14 +128,14 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                 timelineItems.map((item, idx) => {
                   const isOverdue = item.daysRemaining < 0;
                   return (
-                    <tr key={idx} className="hover:bg-neutral-800/40 light:hover:bg-neutral-50 transition-colors">
-                      <td className="py-3 px-4 font-mono font-bold text-white light:text-neutral-900">
+                    <tr key={idx} className="hover:bg-neutral-800/40 transition-colors">
+                      <td className="py-3 px-4 font-mono font-bold text-fg">
                         {formatYMD(item.dueDate)}
                       </td>
-                      <td className="py-3 px-4 font-bold text-white light:text-neutral-900">
+                      <td className="py-3 px-4 font-bold text-fg">
                         <button
                           onClick={() => onOpenPatientModal(item.patient.id)}
-                          className="hover:text-blue-400 hover:underline transition-colors"
+                          className="hover:text-brand hover:underline transition-colors"
                         >
                           {item.patient.name}
                         </button>
@@ -144,9 +144,9 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="font-bold text-blue-400">{item.medName}</div>
+                        <div className="font-bold text-brand">{item.medName}</div>
                       </td>
-                      <td className="py-3 px-3 text-neutral-300 light:text-neutral-700">
+                      <td className="py-3 px-3 text-neutral-300">
                         <span>{item.lastDispenseDate}</span>
                         <span className="text-[10px] text-neutral-400 block">
                           ({item.daysSupply} {lang === 'ar' ? 'يوم' : 'days'})
@@ -154,11 +154,11 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                       </td>
                       <td className="py-3 px-3">
                         {isOverdue ? (
-                          <span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded bg-rose-950/70 text-rose-400 border border-rose-800/50">
+                          <span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded bg-critical-bg text-critical-fg border border-critical-border">
                             {lang === 'ar' ? `منتهي منذ ${Math.abs(item.daysRemaining)} يوم` : `${Math.abs(item.daysRemaining)}d overdue`}
                           </span>
                         ) : item.daysRemaining <= 3 ? (
-                          <span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded bg-amber-950/70 text-amber-400 border border-amber-800/50">
+                          <span className="inline-block text-[11px] font-bold px-2 py-0.5 rounded bg-warning-bg text-warning-fg border border-warning-border">
                             {lang === 'ar' ? `متبقي ${item.daysRemaining} يوم` : `${item.daysRemaining}d left`}
                           </span>
                         ) : (
@@ -170,9 +170,9 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                       <td className="py-3 px-4 text-center">
                         <button
                           onClick={() => onOpenRefillModal(item.patient.id, item.medIndex)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0f6cbd] hover:bg-[#115ea3] text-white text-xs font-bold shadow-sm transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-brand hover:bg-brand-hover text-on-brand text-xs font-bold transition-colors"
                         >
-                          <Zap className="w-3.5 h-3.5 text-amber-300" />
+                          <Zap className="w-3.5 h-3.5 text-warning-fg" />
                           <span>{lang === 'ar' ? 'صرف هذا الدواء فقط ⚡' : 'Refill Med ⚡'}</span>
                         </button>
                       </td>

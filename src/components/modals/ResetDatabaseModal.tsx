@@ -36,18 +36,18 @@ export const ResetDatabaseModal: React.FC<ResetDatabaseModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-[#1c1c1c] border border-rose-900/60 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+      <div className="bg-surface border border-critical-border rounded-[4px] w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="p-4 border-b border-[#383838] flex items-center justify-between bg-[#171717]">
+        <div className="p-4 border-b border-stroke flex items-center justify-between bg-surface">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400">
-              <AlertTriangle className="w-5 h-5 text-rose-400" />
+            <div className="p-2.5 rounded-[4px] bg-critical-bg0/10 border border-critical-border text-critical-fg">
+              <AlertTriangle className="w-5 h-5 text-critical-fg" />
             </div>
             <div>
-              <h2 className="font-extrabold text-sm text-white flex items-center gap-2">
+              <h2 className="font-extrabold text-sm text-fg flex items-center gap-2">
                 <span>{lang === 'ar' ? 'تفريغ قاعدة البيانات وحذف السجلات' : 'Reset & Empty Database'}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30">
+                <span className="text-[10px] px-2 py-0.5 rounded bg-critical-bg0/20 text-critical-fg font-bold border border-critical-border">
                   {lang === 'ar' ? 'إجراء لا رجعة فيه' : 'Irreversible Action'}
                 </span>
               </h2>
@@ -62,7 +62,7 @@ export const ResetDatabaseModal: React.FC<ResetDatabaseModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={isResetting}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors disabled:opacity-50"
+            className="p-1.5 rounded-[4px] text-neutral-400 hover:text-fg hover:bg-neutral-800 transition-colors disabled:opacity-50"
           >
             <X className="w-5 h-5" />
           </button>
@@ -79,9 +79,9 @@ export const ResetDatabaseModal: React.FC<ResetDatabaseModalProps> = ({
 
           {/* Cloud Sheet Status Warning Box */}
           {isGoogleSheetConnected ? (
-            <div className="p-4 rounded-xl bg-amber-950/25 border border-amber-700/50 space-y-2.5">
-              <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
-                <Cloud className="w-4 h-4 text-amber-400 shrink-0" />
+            <div className="p-4 rounded-[4px] bg-warning-bg border border-warning-border space-y-2.5">
+              <div className="flex items-center gap-2 text-warning-fg font-bold text-xs">
+                <Cloud className="w-4 h-4 text-warning-fg shrink-0" />
                 <span>{lang === 'ar' ? '⚠️ تنبيه المزامنة السحابية (Google Sheet متصل)' : '⚠️ Cloud Sync Alert (Google Sheet is Linked)'}</span>
               </div>
               <p className="text-neutral-300 text-[11px] leading-relaxed">
@@ -89,15 +89,15 @@ export const ResetDatabaseModal: React.FC<ResetDatabaseModalProps> = ({
                   ? 'الموقع مربوط حالياً بشيت Google Sheet. إذا قمت بمسح الموقع فقط دون تفريغ الشيت، فستتم استعادة البيانات السابقة تلقائياً بمجرد الضغط على زر المزامنة أو أثناء الفحص الدوري.'
                   : 'The app is linked to a Google Sheet. If you only clear the website, the previous data will be restored automatically on the next sync.'}
               </p>
-              <div className="p-2.5 bg-black/40 rounded-lg border border-amber-600/30 text-[11px] text-amber-200/90 font-medium">
+              <div className="p-2.5 bg-black/40 rounded-[4px] border border-warning-border text-[11px] text-warning-fg font-medium">
                 💡 {lang === 'ar'
                   ? 'لضمان بقاء الموقع فارغاً 100% حتى بعد المزامنة، يُنصح باختيار "تفريغ شامل (الموقع + Google Sheet)".'
                   : 'To guarantee the website stays 100% empty even after syncing, choose "Full Reset (Website + Google Sheet)".'}
               </div>
             </div>
           ) : (
-            <div className="p-3.5 rounded-xl bg-blue-950/20 border border-blue-800/40 text-[11px] text-blue-200/90 flex items-start gap-2.5">
-              <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-[4px] bg-brand-subtle border border-brand text-[11px] text-brand flex items-start gap-2.5">
+              <Info className="w-4 h-4 text-brand shrink-0 mt-0.5" />
               <span>
                 {lang === 'ar'
                   ? 'سيتم مسح كافة بيانات المرضى، المتابعات، وقوائم العلاج من الذاكرة المحلية للمتصفح وتفريغ الموقع تماماً.'
@@ -115,9 +115,9 @@ export const ResetDatabaseModal: React.FC<ResetDatabaseModalProps> = ({
                   type="button"
                   onClick={() => onConfirmReset(true)}
                   disabled={isResetting}
-                  className="w-full text-right p-3.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold transition-all shadow-lg shadow-rose-950/40 border border-rose-500 flex items-start gap-3 group disabled:opacity-60 cursor-pointer"
+                  className="w-full text-right p-3.5 rounded-[4px] bg-critical-bg hover:bg-critical-bg0 text-fg font-bold transition-colors duration-150 shadow-rose-950/40 border border-critical-border flex items-start gap-3 group disabled:opacity-60 cursor-pointer"
                 >
-                  <div className="p-2 rounded-lg bg-rose-700/80 text-white shrink-0 mt-0.5">
+                  <div className="p-2 rounded-[4px] bg-critical-bg text-fg shrink-0 mt-0.5">
                     {isResetting ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />
                     ) : (
@@ -127,11 +127,11 @@ export const ResetDatabaseModal: React.FC<ResetDatabaseModalProps> = ({
                   <div className="flex-1">
                     <div className="text-xs font-black flex items-center justify-between">
                       <span>{lang === 'ar' ? '🔥 تفريغ شامل (الموقع + Google Sheet سحابياً)' : '🔥 Full Reset (Website + Google Sheet)'}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/20 text-white font-mono font-normal">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/20 text-fg font-mono font-normal">
                         {lang === 'ar' ? 'موصى به' : 'Recommended'}
                       </span>
                     </div>
-                    <p className="text-[11px] text-rose-100/90 font-normal mt-1 leading-relaxed">
+                    <p className="text-[11px] text-critical-fg font-normal mt-1 leading-relaxed">
                       {lang === 'ar'
                         ? 'يمسح بيانات الموقع ويفرغ جداول Google Sheet فوراً لتبقى قاعدة البيانات فارغة تماماً حتى مع استمرار المزامنة.'
                         : 'Wipes all local records and clears rows from Google Sheet so future syncs remain empty.'}
@@ -144,9 +144,9 @@ export const ResetDatabaseModal: React.FC<ResetDatabaseModalProps> = ({
                   type="button"
                   onClick={() => onConfirmReset(false)}
                   disabled={isResetting}
-                  className="w-full text-right p-3 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border border-neutral-700/80 transition-all flex items-start gap-3 disabled:opacity-60 cursor-pointer"
+                  className="w-full text-right p-3 rounded-[4px] bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border border-neutral-700/80 transition-colors duration-150 flex items-start gap-3 disabled:opacity-60 cursor-pointer"
                 >
-                  <div className="p-2 rounded-lg bg-neutral-800 text-neutral-300 shrink-0 mt-0.5">
+                  <div className="p-2 rounded-[4px] bg-neutral-800 text-neutral-300 shrink-0 mt-0.5">
                     <RotateCcw className="w-4 h-4" />
                   </div>
                   <div className="flex-1">
@@ -167,7 +167,7 @@ export const ResetDatabaseModal: React.FC<ResetDatabaseModalProps> = ({
                 type="button"
                 onClick={() => onConfirmReset(false)}
                 disabled={isResetting}
-                className="w-full py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-colors disabled:opacity-60 cursor-pointer"
+                className="w-full py-3 px-4 rounded-[4px] bg-critical-bg hover:bg-critical-bg0 text-fg font-bold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-60 cursor-pointer"
               >
                 {isResetting ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
@@ -181,12 +181,12 @@ export const ResetDatabaseModal: React.FC<ResetDatabaseModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-3 bg-[#171717] border-t border-[#383838] flex items-center justify-end">
+        <div className="p-3 bg-surface border-t border-stroke flex items-center justify-end">
           <button
             type="button"
             onClick={onClose}
             disabled={isResetting}
-            className="px-4 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+            className="px-4 py-1.5 rounded-[4px] bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
           >
             {lang === 'ar' ? 'إلغاء وتراجع' : 'Cancel'}
           </button>

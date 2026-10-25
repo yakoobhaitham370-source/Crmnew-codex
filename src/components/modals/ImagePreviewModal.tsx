@@ -264,7 +264,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 bg-black/90 backdrop-blur-md animate-fade-in select-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 bg-black/90 animate-fade-in select-none">
       {/* Hidden file input for direct attachment */}
       <input
         ref={fileInputRef}
@@ -275,13 +275,13 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
         onChange={handleFileAttach}
       />
 
-      <div className={`bg-[#181818] border border-[#383838] rounded-2xl shadow-2xl overflow-hidden flex flex-col transition-all duration-200 ${
+      <div className={`bg-surface border border-stroke rounded-[4px]  overflow-hidden flex flex-col transition-colors duration-150 duration-200 ${
         isFullscreen ? 'w-full h-full' : 'max-w-5xl w-full h-[90vh]'
       }`}>
         {/* Top bar */}
-        <div className="p-3.5 bg-[#222222] border-b border-[#383838] flex items-center justify-between gap-3 text-white">
+        <div className="p-3.5 bg-subtle border-b border-stroke flex items-center justify-between gap-3 text-fg">
           <div className="flex items-center gap-2.5 min-w-0">
-            <FileText className="w-5 h-5 text-blue-400 shrink-0" />
+            <FileText className="w-5 h-5 text-brand shrink-0" />
             <div className="min-w-0">
               <div className="font-extrabold text-sm truncate flex items-center gap-2">
                 <span>{currentScan.title || (lang === 'ar' ? 'معاينة الصورة الأصلية' : 'Full Resolution Preview')}</span>
@@ -297,17 +297,17 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                   <span>{currentScan.date}</span>
                 </span>
                 {patientName && (
-                  <span className="truncate text-blue-300">
+                  <span className="truncate text-brand">
                     {lang === 'ar' ? 'المريض:' : 'Patient:'} {patientName}
                   </span>
                 )}
                 {currentScan.driveUrl ? (
-                  <span className="text-emerald-400 flex items-center gap-1 font-semibold">
+                  <span className="text-success-fg flex items-center gap-1 font-semibold">
                     <CloudCheck className="w-3 h-3" />
                     <span>{lang === 'ar' ? 'محفوظ على Google Drive ☁️' : 'Saved in Google Drive'}</span>
                   </span>
                 ) : (
-                  <span className="text-amber-400 flex items-center gap-1">
+                  <span className="text-warning-fg flex items-center gap-1">
                     <HardDrive className="w-3 h-3" />
                     <span>{lang === 'ar' ? 'محفوظ محلياً بدقة كاملة' : 'Local Storage'}</span>
                   </span>
@@ -324,7 +324,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
               onClick={() => fileInputRef.current?.click()}
               disabled={isReuploading}
               title={lang === 'ar' ? 'إرفاق أو استبدال ملف الصورة' : 'Attach or Replace Image File'}
-              className="p-2 rounded-lg bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 transition-colors flex items-center gap-1.5 text-xs font-bold"
+              className="p-2 rounded-[4px] bg-success-bg hover:bg-success-bg text-success-fg hover:text-fg border border-success-border transition-colors flex items-center gap-1.5 text-xs font-bold"
             >
               {isReuploading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -337,12 +337,12 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
             </button>
 
             {/* Zoom Controls */}
-            <div className="bg-[#141414] border border-[#333333] rounded-lg p-0.5 flex items-center gap-0.5">
+            <div className="bg-canvas border border-stroke rounded-[4px] p-0.5 flex items-center gap-0.5">
               <button
                 type="button"
                 onClick={handleZoomOut}
                 title={lang === 'ar' ? 'تصغير (-)' : 'Zoom Out (-)'}
-                className="p-1.5 rounded hover:bg-neutral-800 text-neutral-300 hover:text-white transition-colors"
+                className="p-1.5 rounded hover:bg-neutral-800 text-neutral-300 hover:text-fg transition-colors"
               >
                 <ZoomOut className="w-4 h-4" />
               </button>
@@ -350,7 +350,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                 type="button"
                 onClick={handleResetZoom}
                 title={lang === 'ar' ? 'إعادة ضبط الحجم' : 'Reset Scale'}
-                className="px-2 py-1 text-[11px] font-mono font-bold text-neutral-300 hover:text-white hover:bg-neutral-800 rounded transition-colors"
+                className="px-2 py-1 text-[11px] font-mono font-bold text-neutral-300 hover:text-fg hover:bg-neutral-800 rounded transition-colors"
               >
                 {Math.round(zoom * 100)}%
               </button>
@@ -358,19 +358,19 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                 type="button"
                 onClick={handleZoomIn}
                 title={lang === 'ar' ? 'تكبير (+)' : 'Zoom In (+)'}
-                className="p-1.5 rounded hover:bg-neutral-800 text-neutral-300 hover:text-white transition-colors"
+                className="p-1.5 rounded hover:bg-neutral-800 text-neutral-300 hover:text-fg transition-colors"
               >
                 <ZoomIn className="w-4 h-4" />
               </button>
             </div>
 
             {/* Rotation Controls */}
-            <div className="bg-[#141414] border border-[#333333] rounded-lg p-0.5 flex items-center gap-0.5">
+            <div className="bg-canvas border border-stroke rounded-[4px] p-0.5 flex items-center gap-0.5">
               <button
                 type="button"
                 onClick={handleRotateCcw}
                 title={lang === 'ar' ? 'تدوير يساراً 90°' : 'Rotate Left 90°'}
-                className="p-1.5 rounded hover:bg-neutral-800 text-neutral-300 hover:text-white transition-colors"
+                className="p-1.5 rounded hover:bg-neutral-800 text-neutral-300 hover:text-fg transition-colors"
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
@@ -378,7 +378,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                 type="button"
                 onClick={handleRotateCw}
                 title={lang === 'ar' ? 'تدوير يميناً 90° (R)' : 'Rotate Right 90° (R)'}
-                className="p-1.5 rounded hover:bg-neutral-800 text-neutral-300 hover:text-white transition-colors"
+                className="p-1.5 rounded hover:bg-neutral-800 text-neutral-300 hover:text-fg transition-colors"
               >
                 <RotateCw className="w-4 h-4" />
               </button>
@@ -390,7 +390,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                 type="button"
                 onClick={handleDownload}
                 title={lang === 'ar' ? 'تحميل الصورة الأصلية بالدقة الكاملة' : 'Download Original High-Res Image'}
-                className="p-2 rounded-lg bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/40 transition-colors flex items-center gap-1.5 text-xs font-bold"
+                className="p-2 rounded-[4px] bg-blue-600/30 hover:bg-blue-600 text-brand hover:text-fg border border-brand transition-colors flex items-center gap-1.5 text-xs font-bold"
               >
                 <Download className="w-4 h-4" />
                 <span className="hidden sm:inline">{lang === 'ar' ? 'تحميل الأصل' : 'Download'}</span>
@@ -404,7 +404,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                 target="_blank"
                 rel="noreferrer"
                 title={lang === 'ar' ? 'فتح الملف في Google Drive' : 'Open in Google Drive'}
-                className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white border border-neutral-700 transition-colors flex items-center gap-1.5 text-xs"
+                className="p-2 rounded-[4px] bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-fg border border-neutral-700 transition-colors flex items-center gap-1.5 text-xs"
               >
                 <ExternalLink className="w-4 h-4" />
                 <span className="hidden md:inline">Drive</span>
@@ -416,7 +416,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
               type="button"
               onClick={() => setIsFullscreen(!isFullscreen)}
               title={isFullscreen ? (lang === 'ar' ? 'تصغير الشاشة' : 'Exit Fullscreen') : (lang === 'ar' ? 'ملء الشاشة' : 'Fullscreen')}
-              className="p-2 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-white transition-colors"
+              className="p-2 rounded-[4px] hover:bg-neutral-800 text-neutral-400 hover:text-fg transition-colors"
             >
               {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </button>
@@ -426,7 +426,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
               type="button"
               onClick={onClose}
               title={lang === 'ar' ? 'إغلاق (Esc)' : 'Close (Esc)'}
-              className="p-2 rounded-lg bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-600/40 transition-colors"
+              className="p-2 rounded-[4px] bg-critical-bg hover:bg-critical-bg text-critical-fg hover:text-fg border border-critical-border transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -434,10 +434,10 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
         </div>
 
         {/* Viewport Area */}
-        <div className="flex-1 overflow-auto bg-[#0d0d0d] relative flex items-center justify-center p-4 min-h-[300px]">
+        <div className="flex-1 overflow-auto bg-canvas relative flex items-center justify-center p-4 min-h-[300px]">
           {isLoading ? (
             <div className="text-center text-neutral-400 text-xs flex flex-col items-center gap-3">
-              <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+              <Loader2 className="w-8 h-8 text-brand animate-spin" />
               <span>{lang === 'ar' ? 'جارِ جلب وتحميل الصورة بالدقة الكاملة...' : 'Loading full-resolution image...'}</span>
             </div>
           ) : imageSrc && !hasError ? (
@@ -452,17 +452,17 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                 src={imageSrc}
                 alt={currentScan.title || 'Medical Scan'}
                 onError={handleImageError}
-                className="max-w-full max-h-[78vh] object-contain rounded-lg shadow-2xl border border-neutral-800 pointer-events-auto"
+                className="max-w-full max-h-[78vh] object-contain rounded-[4px] border border-neutral-800 pointer-events-auto"
                 style={{ imageRendering: 'auto' }}
               />
             </div>
           ) : (
-            <div className="text-center text-neutral-400 text-xs space-y-4 max-w-md p-6 bg-neutral-900/80 rounded-2xl border border-neutral-800 shadow-2xl">
-              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto text-amber-400">
+            <div className="text-center text-neutral-400 text-xs space-y-4 max-w-md p-6 bg-neutral-900/80 rounded-[4px] border border-neutral-800">
+              <div className="w-14 h-14 rounded-[4px] bg-warning-bg0/10 border border-warning-border flex items-center justify-center mx-auto text-warning-fg">
                 <AlertCircle className="w-7 h-7" />
               </div>
               <div>
-                <div className="font-bold text-white text-base mb-1">
+                <div className="font-bold text-fg text-base mb-1">
                   {lang === 'ar' ? 'تعذر عرض الصورة الأصلية' : 'Image Source Unavailable'}
                 </div>
                 <p className="text-neutral-400 text-xs leading-relaxed">
@@ -478,7 +478,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isReuploading}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/25 transition-all"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-[4px] bg-blue-600 hover:bg-brand-subtle0 text-fg font-bold text-xs shadow-blue-600/25 transition-colors duration-150"
                 >
                   {isReuploading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -493,7 +493,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                     href={currentScan.driveUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-bold text-xs border border-neutral-700 transition-all"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-[4px] bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-bold text-xs border border-neutral-700 transition-colors duration-150"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                     <span>{lang === 'ar' ? 'Google Drive' : 'Google Drive'}</span>
@@ -505,7 +505,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
         </div>
 
         {/* Footer info bar */}
-        <div className="p-2.5 bg-[#1f1f1f] border-t border-[#383838] flex items-center justify-between text-xs text-neutral-400">
+        <div className="p-2.5 bg-surface border-t border-stroke flex items-center justify-between text-xs text-neutral-400">
           <div className="flex items-center gap-3">
             <span>
               {lang === 'ar'
@@ -523,7 +523,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                   onClose();
                 }
               }}
-              className="text-rose-400 hover:text-rose-300 hover:underline font-semibold"
+              className="text-critical-fg hover:text-critical-fg hover:underline font-semibold"
             >
               {lang === 'ar' ? 'حذف الصورة' : 'Delete Image'}
             </button>

@@ -72,17 +72,17 @@ export const FollowUpModal: React.FC<FollowUpModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-      <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 animate-fade-in">
+      <div className="bg-surface border border-stroke rounded-[4px] max-w-lg w-full overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-4 bg-[#292929] light:bg-neutral-100 border-b border-[#383838] flex items-center justify-between">
-          <div className="font-extrabold text-base text-white light:text-neutral-900 flex items-center gap-2">
-            <Stethoscope className="w-5 h-5 text-amber-400" />
+        <div className="p-4 bg-subtle border-b border-stroke flex items-center justify-between">
+          <div className="font-extrabold text-base text-fg flex items-center gap-2">
+            <Stethoscope className="w-5 h-5 text-warning-fg" />
             <span>{lang === 'ar' ? 'تسجيل متابعة سريرية جديدة (مضاد / علاج مزمن)' : 'New Clinical Follow-Up'}</span>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+            className="p-1 rounded-[4px] text-neutral-400 hover:text-fg hover:bg-neutral-800 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -91,13 +91,13 @@ export const FollowUpModal: React.FC<FollowUpModalProps> = ({
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
           <div className="space-y-1">
-            <label className="font-semibold text-neutral-300 light:text-neutral-700">
+            <label className="font-semibold text-neutral-300">
               {lang === 'ar' ? 'اختر المريض *' : 'Select Patient *'}
             </label>
             <select
               value={patientId}
               onChange={e => setPatientId(e.target.value)}
-              className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500"
+              className="w-full bg-canvas border border-stroke text-fg rounded-[4px] p-2.5 outline-none focus:border-brand"
               required
             >
               {activePatients.map(p => (
@@ -110,13 +110,13 @@ export const FollowUpModal: React.FC<FollowUpModalProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="font-semibold text-neutral-300 light:text-neutral-700">
+              <label className="font-semibold text-neutral-300">
                 {lang === 'ar' ? 'نوع المتابعة السريرية *' : 'Follow-Up Category *'}
               </label>
               <select
                 value={type}
                 onChange={e => handleTypeChange(e.target.value as FollowUpType)}
-                className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500"
+                className="w-full bg-canvas border border-stroke text-fg rounded-[4px] p-2.5 outline-none focus:border-brand"
               >
                 <option value="ANTIBIOTIC">مضاد حيوي (Stewardship)</option>
                 <option value="CHRONIC_INIT">بدء علاج مزمن جديد</option>
@@ -126,7 +126,7 @@ export const FollowUpModal: React.FC<FollowUpModalProps> = ({
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-neutral-300 light:text-neutral-700">
+              <label className="font-semibold text-neutral-300">
                 {lang === 'ar' ? 'اسم العلاج / المضاد *' : 'Medication / Antibiotic *'}
               </label>
               <input
@@ -134,7 +134,7 @@ export const FollowUpModal: React.FC<FollowUpModalProps> = ({
                 value={drug}
                 onChange={e => setDrug(e.target.value)}
                 placeholder="Augmentin 1g, Glucophage..."
-                className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500"
+                className="w-full bg-canvas border border-stroke text-fg rounded-[4px] p-2.5 outline-none focus:border-brand"
                 required
               />
             </div>
@@ -142,25 +142,25 @@ export const FollowUpModal: React.FC<FollowUpModalProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="font-semibold text-neutral-300 light:text-neutral-700">
+              <label className="font-semibold text-neutral-300">
                 {lang === 'ar' ? 'تاريخ البدء أو الصرف' : 'Start Date'}
               </label>
               <input
                 type="date"
                 value={startDateStr}
                 onChange={e => setStartDateStr(e.target.value)}
-                className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500 font-mono"
+                className="w-full bg-canvas border border-stroke text-fg rounded-[4px] p-2.5 outline-none focus:border-brand font-mono"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-neutral-300 light:text-neutral-700">
+              <label className="font-semibold text-neutral-300">
                 {lang === 'ar' ? 'موعد المتابعة (بعد كم يوم؟)' : 'Milestone Timing'}
               </label>
               <select
                 value={daysOffset}
                 onChange={e => setDaysOffset(parseInt(e.target.value, 10))}
-                className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500"
+                className="w-full bg-canvas border border-stroke text-fg rounded-[4px] p-2.5 outline-none focus:border-brand"
               >
                 <option value={3}>بعد 3 أيام (استجابة أولية / حرارة / تقبل)</option>
                 <option value={7}>بعد 7 أيام (إكمال كورس مضاد / استقرار)</option>
@@ -171,7 +171,7 @@ export const FollowUpModal: React.FC<FollowUpModalProps> = ({
           </div>
 
           <div className="space-y-1">
-            <label className="font-semibold text-neutral-300 light:text-neutral-700">
+            <label className="font-semibold text-neutral-300">
               {lang === 'ar' ? 'ملاحظات الاستشارة والتعليمات الخاصة' : 'Counseling & Clinical Notes'}
             </label>
             <textarea
@@ -179,22 +179,22 @@ export const FollowUpModal: React.FC<FollowUpModalProps> = ({
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="مثال: تم التنبيه على أخذ العلاج بعد الطعام ومراقبة هبوط الحرارة..."
-              className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 rounded-lg p-2.5 outline-none focus:border-blue-500"
+              className="w-full bg-canvas border border-stroke text-fg rounded-[4px] p-2.5 outline-none focus:border-brand"
             />
           </div>
 
           {/* Footer */}
-          <div className="pt-3 border-t border-[#2e2e2e] light:border-neutral-200 flex items-center justify-end gap-3">
+          <div className="pt-3 border-t border-stroke flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold"
+              className="px-4 py-2 rounded-[4px] bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold"
             >
               {lang === 'ar' ? 'إلغاء' : 'Cancel'}
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-5 py-2 rounded-lg bg-[#0f6cbd] hover:bg-[#115ea3] text-white font-bold shadow-md"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-[4px] bg-brand hover:bg-brand-hover text-on-brand font-bold"
             >
               <Check className="w-4 h-4" />
               <span>{lang === 'ar' ? 'حفظ وتفعيل خطة المتابعة' : 'Activate Follow-Up'}</span>

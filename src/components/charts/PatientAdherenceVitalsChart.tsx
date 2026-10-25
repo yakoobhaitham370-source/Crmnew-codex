@@ -148,27 +148,27 @@ export const PatientAdherenceVitalsChart: React.FC<PatientAdherenceVitalsChartPr
     if (active && payload && payload.length) {
       const dataPoint = payload[0].payload;
       return (
-        <div className="bg-[#191919] border border-[#383838] p-3 rounded-xl shadow-xl text-xs space-y-1 z-50">
-          <div className="font-bold text-white flex items-center justify-between gap-3">
+        <div className="bg-surface border border-stroke p-3 rounded-[4px] text-xs space-y-1 z-50">
+          <div className="font-bold text-fg flex items-center justify-between gap-3">
             <span>{dataPoint.milestone}</span>
             <span className="text-neutral-400 font-mono text-[11px]">{dataPoint.date}</span>
           </div>
-          <div className="border-t border-[#333] pt-1.5 space-y-1">
-            <div className="flex items-center justify-between gap-4 text-emerald-400 font-semibold">
+          <div className="border-t border-stroke pt-1.5 space-y-1">
+            <div className="flex items-center justify-between gap-4 text-success-fg font-semibold">
               <span>{lang === 'ar' ? 'نسبة الالتزام الدوائي:' : 'Adherence Rate:'}</span>
               <span className="font-mono">{dataPoint.adherence}%</span>
             </div>
-            <div className="flex items-center justify-between gap-4 text-blue-400">
+            <div className="flex items-center justify-between gap-4 text-brand">
               <span>{lang === 'ar' ? 'ضغط الدم (BP):' : 'Blood Pressure:'}</span>
               <span className="font-mono">{dataPoint.systolic}/{dataPoint.diastolic} mmHg</span>
             </div>
-            <div className="flex items-center justify-between gap-4 text-amber-400">
+            <div className="flex items-center justify-between gap-4 text-warning-fg">
               <span>{lang === 'ar' ? 'السكر العشوائي (Glucose):' : 'Blood Glucose:'}</span>
               <span className="font-mono">{dataPoint.glucose} mg/dL</span>
             </div>
           </div>
           {dataPoint.notes && (
-            <div className="text-[10px] text-neutral-400 border-t border-[#333] pt-1 mt-1 max-w-[220px]">
+            <div className="text-[10px] text-neutral-400 border-t border-stroke pt-1 mt-1 max-w-[220px]">
               {dataPoint.notes}
             </div>
           )}
@@ -183,17 +183,17 @@ export const PatientAdherenceVitalsChart: React.FC<PatientAdherenceVitalsChartPr
       {/* Top Clinical Stats Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {/* Adherence Rate */}
-        <div className="bg-[#141414] light:bg-neutral-50 p-3.5 rounded-xl border border-[#2e2e2e] light:border-neutral-200 space-y-1">
+        <div className="bg-canvas p-3.5 rounded-[4px] border border-stroke space-y-1">
           <div className="text-[11px] text-neutral-400 font-semibold flex items-center justify-between">
             <span>{lang === 'ar' ? 'مستوى الالتزام الحالي' : 'Current Adherence'}</span>
-            <Award className="w-3.5 h-3.5 text-emerald-400" />
+            <Award className="w-3.5 h-3.5 text-success-fg" />
           </div>
-          <div className="text-xl font-extrabold text-emerald-400 font-mono flex items-baseline gap-1.5">
+          <div className="text-xl font-extrabold text-success-fg font-mono flex items-baseline gap-1.5">
             <span>{stats.latestAdherence}%</span>
             {stats.adherenceDelta !== 0 && (
               <span
                 className={`text-[11px] font-bold flex items-center ${
-                  stats.adherenceDelta > 0 ? 'text-emerald-400' : 'text-rose-400'
+                  stats.adherenceDelta > 0 ? 'text-success-fg' : 'text-critical-fg'
                 }`}
               >
                 {stats.adherenceDelta > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
@@ -204,17 +204,17 @@ export const PatientAdherenceVitalsChart: React.FC<PatientAdherenceVitalsChartPr
         </div>
 
         {/* Latest BP */}
-        <div className="bg-[#141414] light:bg-neutral-50 p-3.5 rounded-xl border border-[#2e2e2e] light:border-neutral-200 space-y-1">
+        <div className="bg-canvas p-3.5 rounded-[4px] border border-stroke space-y-1">
           <div className="text-[11px] text-neutral-400 font-semibold flex items-center justify-between">
             <span>{lang === 'ar' ? 'آخر قراءة ضغط' : 'Latest BP'}</span>
-            <HeartPulse className="w-3.5 h-3.5 text-blue-400" />
+            <HeartPulse className="w-3.5 h-3.5 text-brand" />
           </div>
-          <div className="text-xl font-extrabold text-blue-400 font-mono flex items-baseline gap-1.5">
+          <div className="text-xl font-extrabold text-brand font-mono flex items-baseline gap-1.5">
             <span>{stats.latestBP || '—'}</span>
             {stats.sysDelta !== 0 && (
               <span
                 className={`text-[11px] font-bold flex items-center ${
-                  stats.sysDelta < 0 ? 'text-emerald-400' : 'text-rose-400'
+                  stats.sysDelta < 0 ? 'text-success-fg' : 'text-critical-fg'
                 }`}
                 title="تغير الضغط الانقباضي مقارنة بالبداية"
               >
@@ -226,19 +226,19 @@ export const PatientAdherenceVitalsChart: React.FC<PatientAdherenceVitalsChartPr
         </div>
 
         {/* Latest Glucose */}
-        <div className="bg-[#141414] light:bg-neutral-50 p-3.5 rounded-xl border border-[#2e2e2e] light:border-neutral-200 space-y-1">
+        <div className="bg-canvas p-3.5 rounded-[4px] border border-stroke space-y-1">
           <div className="text-[11px] text-neutral-400 font-semibold flex items-center justify-between">
             <span>{lang === 'ar' ? 'آخر قراءة سكر' : 'Latest Glucose'}</span>
-            <Activity className="w-3.5 h-3.5 text-amber-400" />
+            <Activity className="w-3.5 h-3.5 text-warning-fg" />
           </div>
-          <div className="text-xl font-extrabold text-amber-400 font-mono flex items-baseline gap-1.5">
+          <div className="text-xl font-extrabold text-warning-fg font-mono flex items-baseline gap-1.5">
             <span>{stats.latestGlucose || '—'}</span>
             <span className="text-xs font-normal text-neutral-500">mg/dL</span>
           </div>
         </div>
 
         {/* Milestones Logged */}
-        <div className="bg-[#141414] light:bg-neutral-50 p-3.5 rounded-xl border border-[#2e2e2e] light:border-neutral-200 space-y-1 flex flex-col justify-between">
+        <div className="bg-canvas p-3.5 rounded-[4px] border border-stroke space-y-1 flex flex-col justify-between">
           <div className="text-[11px] text-neutral-400 font-semibold flex items-center justify-between">
             <span>{lang === 'ar' ? 'المحطات المسجلة' : 'Logged Milestones'}</span>
             <Calendar className="w-3.5 h-3.5 text-purple-400" />
@@ -251,7 +251,7 @@ export const PatientAdherenceVitalsChart: React.FC<PatientAdherenceVitalsChartPr
               <button
                 type="button"
                 onClick={onOpenNewFollowUp}
-                className="text-[10px] font-bold px-2 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-1 shadow-sm transition-colors cursor-pointer"
+                className="text-[10px] font-bold px-2 py-1 rounded bg-blue-600 hover:bg-brand-subtle0 text-fg flex items-center gap-1 transition-colors cursor-pointer"
               >
                 <Plus className="w-3 h-3" />
                 <span>{lang === 'ar' ? 'متابعة جديدة' : 'New Log'}</span>
@@ -262,10 +262,10 @@ export const PatientAdherenceVitalsChart: React.FC<PatientAdherenceVitalsChartPr
       </div>
 
       {/* Main Interactive Recharts Chart Panel */}
-      <div className="bg-[#141414] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl p-4 shadow-sm space-y-4">
+      <div className="bg-canvas border border-stroke rounded-[4px] p-4 space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="font-bold text-sm text-white light:text-neutral-900 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-emerald-400" />
+          <div className="font-bold text-sm text-fg flex items-center gap-2">
+            <Activity className="w-4 h-4 text-success-fg" />
             <span>
               {lang === 'ar'
                 ? 'التطور السريري التتبعي للمريض (Adherence & Longitudinal Vitals)'
@@ -274,14 +274,14 @@ export const PatientAdherenceVitalsChart: React.FC<PatientAdherenceVitalsChartPr
           </div>
 
           {/* Mode Switcher Buttons */}
-          <div className="flex items-center bg-[#1f1f1f] light:bg-neutral-100 p-1 rounded-lg border border-[#383838] light:border-neutral-300 gap-1 text-[11px] font-semibold">
+          <div className="flex items-center bg-surface p-1 rounded-[4px] border border-stroke gap-1 text-[11px] font-semibold">
             <button
               type="button"
               onClick={() => setChartMode('combined')}
               className={`px-2.5 py-1 rounded-md transition-colors ${
                 chartMode === 'combined'
-                  ? 'bg-blue-600 text-white font-bold shadow-sm'
-                  : 'text-neutral-400 hover:text-white light:hover:text-neutral-900'
+                  ? 'bg-blue-600 text-fg font-bold '
+                  : 'text-neutral-400 hover:text-fg '
               }`}
             >
               {lang === 'ar' ? 'المخطط الشامل 📊' : 'Combined 📊'}
@@ -291,8 +291,8 @@ export const PatientAdherenceVitalsChart: React.FC<PatientAdherenceVitalsChartPr
               onClick={() => setChartMode('adherence')}
               className={`px-2.5 py-1 rounded-md transition-colors ${
                 chartMode === 'adherence'
-                  ? 'bg-emerald-600 text-white font-bold shadow-sm'
-                  : 'text-neutral-400 hover:text-white light:hover:text-neutral-900'
+                  ? 'bg-success-bg text-fg font-bold '
+                  : 'text-neutral-400 hover:text-fg '
               }`}
             >
               {lang === 'ar' ? 'الالتزام %' : 'Adherence %'}
@@ -302,8 +302,8 @@ export const PatientAdherenceVitalsChart: React.FC<PatientAdherenceVitalsChartPr
               onClick={() => setChartMode('blood_pressure')}
               className={`px-2.5 py-1 rounded-md transition-colors ${
                 chartMode === 'blood_pressure'
-                  ? 'bg-blue-600 text-white font-bold shadow-sm'
-                  : 'text-neutral-400 hover:text-white light:hover:text-neutral-900'
+                  ? 'bg-blue-600 text-fg font-bold '
+                  : 'text-neutral-400 hover:text-fg '
               }`}
             >
               {lang === 'ar' ? 'ضغط الدم' : 'Blood Pressure'}
@@ -313,8 +313,8 @@ export const PatientAdherenceVitalsChart: React.FC<PatientAdherenceVitalsChartPr
               onClick={() => setChartMode('glucose')}
               className={`px-2.5 py-1 rounded-md transition-colors ${
                 chartMode === 'glucose'
-                  ? 'bg-amber-600 text-white font-bold shadow-sm'
-                  : 'text-neutral-400 hover:text-white light:hover:text-neutral-900'
+                  ? 'bg-warning-bg text-fg font-bold '
+                  : 'text-neutral-400 hover:text-fg '
               }`}
             >
               {lang === 'ar' ? 'السكر' : 'Glucose'}
@@ -476,9 +476,9 @@ export const PatientAdherenceVitalsChart: React.FC<PatientAdherenceVitalsChartPr
 
       {/* Historical Follow-Up Milestones Grid */}
       <div className="space-y-3">
-        <div className="font-bold text-sm text-white light:text-neutral-900 flex items-center justify-between">
+        <div className="font-bold text-sm text-fg flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-blue-400" />
+            <Calendar className="w-4 h-4 text-brand" />
             <span>{lang === 'ar' ? 'سجل المحطات والمتابعات السريرية السابقة:' : 'Historical Follow-Up Milestones:'}</span>
           </span>
           <span className="text-xs text-neutral-400">{patientFollowUps.length} {lang === 'ar' ? 'سجلات تاريخية' : 'records'}</span>
@@ -488,27 +488,27 @@ export const PatientAdherenceVitalsChart: React.FC<PatientAdherenceVitalsChartPr
           {chartData.map((pt, i) => (
             <div
               key={i}
-              className="bg-[#141414] light:bg-neutral-50 p-3 rounded-xl border border-[#2e2e2e] light:border-neutral-200 text-xs space-y-1.5"
+              className="bg-canvas p-3 rounded-[4px] border border-stroke text-xs space-y-1.5"
             >
               <div className="flex items-center justify-between">
-                <span className="font-bold text-white light:text-neutral-900">{pt.milestone}</span>
+                <span className="font-bold text-fg">{pt.milestone}</span>
                 <span className="font-mono text-neutral-400 text-[11px]">{pt.date}</span>
               </div>
 
               <div className="flex items-center gap-2 flex-wrap text-[11px]">
-                <span className="font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/40">
+                <span className="font-bold text-success-fg bg-success-bg px-2 py-0.5 rounded border border-success-border">
                   {lang === 'ar' ? 'الالتزام:' : 'Adherence:'} {pt.adherence}%
                 </span>
-                <span className="font-mono font-bold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-800/40">
+                <span className="font-mono font-bold text-brand bg-brand-subtle px-2 py-0.5 rounded border border-brand">
                   BP: {pt.systolic}/{pt.diastolic}
                 </span>
-                <span className="font-mono font-bold text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/40">
+                <span className="font-mono font-bold text-warning-fg bg-warning-bg px-2 py-0.5 rounded border border-warning-border">
                   Glucose: {pt.glucose}
                 </span>
               </div>
 
               {pt.notes && (
-                <div className="text-[11px] text-neutral-300 light:text-neutral-600 line-clamp-2 mt-1">
+                <div className="text-[11px] text-neutral-300 line-clamp-2 mt-1">
                   {pt.notes}
                 </div>
               )}

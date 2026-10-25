@@ -98,12 +98,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header Banner */}
-      <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl p-5 shadow-sm">
-        <div className="font-extrabold text-lg text-white light:text-neutral-900 flex items-center gap-2">
-          <SettingsIcon className="w-5 h-5 text-blue-400" />
+      <div className="bg-surface border border-stroke rounded-[4px] p-5">
+        <div className="font-extrabold text-lg text-fg flex items-center gap-2">
+          <SettingsIcon className="w-5 h-5 text-brand" />
           <span>{lang === 'ar' ? 'الإعدادات العامة والربط السحابي وقوالب الرسائل' : 'Settings & Cloud Integration'}</span>
         </div>
-        <p className="text-xs text-neutral-400 light:text-neutral-500 mt-1">
+        <p className="text-xs text-neutral-400 mt-1">
           {lang === 'ar'
             ? 'تخصيص اسم الصيدلية، ورابط مزامنة Google Sheet / Google Drive، وصيغ رسائل التذكير والمتابعة السريرية.'
             : 'Configure pharmacy branding, Google Sheet Web App endpoint, and customized WhatsApp & SMS messaging templates.'}
@@ -112,37 +112,37 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Pharmacy & Cloud */}
-        <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl p-5 shadow-sm space-y-4">
-          <div className="font-bold text-sm text-white light:text-neutral-900">
+        <div className="bg-surface border border-stroke rounded-[4px] p-5 space-y-4">
+          <div className="font-bold text-sm text-fg">
             {lang === 'ar' ? 'البيانات الأساسية والربط السحابي' : 'Basic & Cloud Configuration'}
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-neutral-300 light:text-neutral-700">
+            <label className="text-xs font-semibold text-neutral-300">
               {lang === 'ar' ? 'اسم الصيدلية أو المركز السريري' : 'Pharmacy / Clinic Brand Name'}
             </label>
             <input
               type="text"
               value={formData.pharmacyName}
               onChange={e => setFormData({ ...formData, pharmacyName: e.target.value })}
-              className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 text-xs rounded-lg p-2.5 outline-none focus:border-blue-500"
+              className="w-full bg-canvas border border-stroke text-fg text-xs rounded-[4px] p-2.5 outline-none focus:border-brand"
               required
             />
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <label className="text-xs font-semibold text-neutral-300 light:text-neutral-700 flex items-center gap-1.5">
+              <label className="text-xs font-semibold text-neutral-300 flex items-center gap-1.5">
                 <span>{lang === 'ar' ? 'رابط Google Apps Script Web App URL' : 'Google Apps Script Web App URL'}</span>
-                <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[10px] font-mono">/exec</span>
+                <span className="px-1.5 py-0.5 rounded bg-brand-subtle0/20 text-brand text-[10px] font-mono">/exec</span>
               </label>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setShowScriptModal(true)}
-                  className="text-[11px] font-bold text-amber-400 hover:text-amber-300 hover:underline flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-950/40 border border-amber-800/40 transition-colors"
+                  className="text-[11px] font-bold text-warning-fg hover:text-warning-fg hover:underline flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-warning-bg border border-warning-border transition-colors"
                 >
-                  <Code className="w-3.5 h-3.5 text-amber-400" />
+                  <Code className="w-3.5 h-3.5 text-warning-fg" />
                   <span>{lang === 'ar' ? 'كود Apps Script السريع (Code.gs)' : 'Fast Apps Script & Guide'}</span>
                 </button>
 
@@ -151,7 +151,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     type="button"
                     onClick={handleRunDiagnostic}
                     disabled={isDiagnosing}
-                    className="text-[11px] font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-950/40 border border-blue-800/40 hover:bg-blue-900/60 transition-colors cursor-pointer"
+                    className="text-[11px] font-bold text-brand hover:text-brand flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-brand-subtle border border-brand hover:bg-brand-subtle transition-colors cursor-pointer"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${isDiagnosing ? 'animate-spin' : ''}`} />
                     <span>{isDiagnosing ? (lang === 'ar' ? 'جارِ الفحص...' : 'Testing...') : (lang === 'ar' ? 'فحص واختبار الاتصال' : 'Test Sync')}</span>
@@ -162,10 +162,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <button
                     type="button"
                     onClick={onPushLocalToSheet}
-                    className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/40 border border-emerald-800/40 hover:bg-emerald-900/60 transition-colors cursor-pointer"
+                    className="text-[11px] font-bold text-success-fg hover:text-success-fg flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-success-bg border border-success-border hover:bg-success-bg transition-colors cursor-pointer"
                     title={lang === 'ar' ? 'رفع وتصدير السجلات المحلية لتزويد الشيت' : 'Push local records to Google Sheet'}
                   >
-                    <Upload className="w-3.5 h-3.5 text-emerald-400" />
+                    <Upload className="w-3.5 h-3.5 text-success-fg" />
                     <span>{lang === 'ar' ? 'تزويد الشيت محلياً' : 'Push Local Data'}</span>
                   </button>
                 )}
@@ -174,10 +174,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <button
                     type="button"
                     onClick={onResetDatabase}
-                    className="text-[11px] font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-950/40 border border-rose-800/40 hover:bg-rose-900/60 transition-colors cursor-pointer"
+                    className="text-[11px] font-bold text-critical-fg hover:text-critical-fg flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-critical-bg border border-critical-border hover:bg-critical-bg transition-colors cursor-pointer"
                     title={lang === 'ar' ? 'تفريغ قاعدة البيانات ومسح شيت Google Sheet' : 'Reset Database & Google Sheet'}
                   >
-                    <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                    <Trash2 className="w-3.5 h-3.5 text-critical-fg" />
                     <span>{lang === 'ar' ? 'تفريغ الشيت والموقع' : 'Reset DB & Sheet'}</span>
                   </button>
                 )}
@@ -190,14 +190,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 value={formData.gasUrl}
                 onChange={e => setFormData({ ...formData, gasUrl: e.target.value })}
                 placeholder="https://script.google.com/macros/s/.../exec"
-                className={`w-full bg-[#141414] light:bg-neutral-50 border text-white light:text-neutral-900 text-xs rounded-lg p-2.5 font-mono outline-none transition-colors ${
+                className={`w-full bg-canvas border text-fg text-xs rounded-[4px] p-2.5 font-mono outline-none transition-colors ${
                   formData.gasUrl && !urlValidation.isValid
-                    ? 'border-amber-500/80 focus:border-amber-500'
-                    : 'border-[#383838] light:border-neutral-300 focus:border-blue-500'
+                    ? 'border-warning-border focus:border-warning-border'
+                    : 'border-stroke focus:border-brand'
                 }`}
               />
               {formData.gasUrl && urlValidation.isValid && (
-                <div className="absolute left-3 top-2.5 text-emerald-400 flex items-center gap-1 text-[11px]">
+                <div className="absolute left-3 top-2.5 text-success-fg flex items-center gap-1 text-[11px]">
                   <CheckCircle2 className="w-4 h-4" />
                 </div>
               )}
@@ -205,9 +205,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
             {/* Smart Live Diagnostic Warnings */}
             {formData.gasUrl && !urlValidation.isValid && (
-              <div className="p-3 rounded-lg bg-amber-950/30 border border-amber-800/50 space-y-2 text-xs">
-                <div className="flex items-start gap-2 text-amber-300 font-semibold">
-                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+              <div className="p-3 rounded-[4px] bg-warning-bg border border-warning-border space-y-2 text-xs">
+                <div className="flex items-start gap-2 text-warning-fg font-semibold">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-warning-fg" />
                   <span>{urlValidation.error || urlValidation.warning}</span>
                 </div>
                 {urlValidation.tip && (
@@ -219,7 +219,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <button
                     type="button"
                     onClick={handleFixDevUrl}
-                    className="mr-6 px-3 py-1 bg-amber-500 hover:bg-amber-400 text-black font-bold text-[11px] rounded transition-colors"
+                    className="mr-6 px-3 py-1 bg-warning-bg0 hover:bg-warning-bg text-black font-bold text-[11px] rounded transition-colors"
                   >
                     {lang === 'ar' ? '⚡ تحويل الرابط تلقائياً إلى /exec' : 'Auto-fix URL to /exec'}
                   </button>
@@ -236,7 +236,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <a
                 href="/download/Code.gs"
                 download="Code.gs"
-                className="text-blue-400 hover:underline flex items-center gap-1 font-semibold"
+                className="text-brand hover:underline flex items-center gap-1 font-semibold"
               >
                 <Download className="w-3 h-3" />
                 <span>{lang === 'ar' ? 'تحميل ملف Code.gs' : 'Download Code.gs'}</span>
@@ -246,20 +246,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
 
         {/* Messaging Templates */}
-        <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl p-5 shadow-sm space-y-4">
-          <div className="font-bold text-sm text-white light:text-neutral-900">
+        <div className="bg-surface border border-stroke rounded-[4px] p-5 space-y-4">
+          <div className="font-bold text-sm text-fg">
             {lang === 'ar' ? 'قوالب الرسائل المخصصة (WhatsApp & SMS Templates)' : 'Automated Messaging Templates'}
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-neutral-300 light:text-neutral-700">
+            <label className="text-xs font-semibold text-neutral-300">
               {lang === 'ar' ? 'قالب تذكير صرف العلاج المزمن (WhatsApp)' : 'Chronic Refill Reminder Template (WhatsApp)'}
             </label>
             <textarea
               rows={3}
               value={formData.waTemplate}
               onChange={e => setFormData({ ...formData, waTemplate: e.target.value })}
-              className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 text-xs rounded-lg p-2.5 outline-none focus:border-blue-500 leading-relaxed"
+              className="w-full bg-canvas border border-stroke text-fg text-xs rounded-[4px] p-2.5 outline-none focus:border-brand leading-relaxed"
             />
             <div className="text-[10px] text-neutral-400">
               {lang === 'ar' ? 'المتغيرات المتاحة: {name}, {pharmacy}, {drug}, {date}' : 'Variables: {name}, {pharmacy}, {drug}, {date}'}
@@ -267,38 +267,38 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-neutral-300 light:text-neutral-700">
+            <label className="text-xs font-semibold text-neutral-300">
               {lang === 'ar' ? 'قالب متابعة كورس المضاد الحيوي (Antibiotic Stewardship Check-in)' : 'Antibiotic Stewardship Check-in'}
             </label>
             <textarea
               rows={3}
               value={formData.waAbxTemplate}
               onChange={e => setFormData({ ...formData, waAbxTemplate: e.target.value })}
-              className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 text-xs rounded-lg p-2.5 outline-none focus:border-blue-500 leading-relaxed"
+              className="w-full bg-canvas border border-stroke text-fg text-xs rounded-[4px] p-2.5 outline-none focus:border-brand leading-relaxed"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-neutral-300 light:text-neutral-700">
+            <label className="text-xs font-semibold text-neutral-300">
               {lang === 'ar' ? 'قالب متابعة العلاج المزمن الجديد (Chronic Milestones Check-in)' : 'Chronic Therapy Milestone Check-in'}
             </label>
             <textarea
               rows={3}
               value={formData.waChronicFollowTemplate}
               onChange={e => setFormData({ ...formData, waChronicFollowTemplate: e.target.value })}
-              className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 text-xs rounded-lg p-2.5 outline-none focus:border-blue-500 leading-relaxed"
+              className="w-full bg-canvas border border-stroke text-fg text-xs rounded-[4px] p-2.5 outline-none focus:border-brand leading-relaxed"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-neutral-300 light:text-neutral-700">
+            <label className="text-xs font-semibold text-neutral-300">
               {lang === 'ar' ? 'قالب الرسائل النصية القصيرة (SMS Reminder Template)' : 'SMS Text Template'}
             </label>
             <textarea
               rows={2}
               value={formData.smsTemplate}
               onChange={e => setFormData({ ...formData, smsTemplate: e.target.value })}
-              className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 text-xs rounded-lg p-2.5 outline-none focus:border-blue-500 leading-relaxed"
+              className="w-full bg-canvas border border-stroke text-fg text-xs rounded-[4px] p-2.5 outline-none focus:border-brand leading-relaxed"
             />
           </div>
         </div>
@@ -307,9 +307,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <div className="flex items-center justify-between flex-wrap gap-4 pt-2">
           <button
             type="submit"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#0f6cbd] hover:bg-[#115ea3] text-white font-bold text-xs shadow-md transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-[4px] bg-brand hover:bg-brand-hover text-on-brand font-bold text-xs transition-colors cursor-pointer"
           >
-            {savedSuccess ? <Check className="w-4 h-4 text-emerald-300" /> : <Save className="w-4 h-4" />}
+            {savedSuccess ? <Check className="w-4 h-4 text-success-fg" /> : <Save className="w-4 h-4" />}
             <span>{savedSuccess ? (lang === 'ar' ? 'تم الحفظ بنجاح!' : 'Saved!') : (lang === 'ar' ? 'حفظ كافة الإعدادات' : 'Save Settings')}</span>
           </button>
 
@@ -317,13 +317,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <button
               type="button"
               onClick={onExportBackup}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 text-xs font-semibold transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-[4px] bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 text-xs font-semibold transition-colors"
             >
               <Download className="w-3.5 h-3.5" />
               <span>{lang === 'ar' ? 'تصدير نسخة احتياطية (JSON)' : 'Export JSON Backup'}</span>
             </button>
 
-            <label className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 text-xs font-semibold transition-colors cursor-pointer">
+            <label className="flex items-center gap-1.5 px-3 py-2 rounded-[4px] bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 text-xs font-semibold transition-colors cursor-pointer">
               <Upload className="w-3.5 h-3.5" />
               <span>{lang === 'ar' ? 'استيراد نسخة احتياطية' : 'Import JSON'}</span>
               <input
@@ -337,7 +337,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <button
               type="button"
               onClick={onResetDatabase}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-[4px] bg-critical-bg hover:bg-critical-bg text-critical-fg border border-critical-border text-xs font-semibold transition-colors cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>{lang === 'ar' ? 'تفريغ ومسح كافة البيانات' : 'Reset & Empty Database'}</span>
@@ -346,20 +346,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
 
         {/* Netlify Deployment Section */}
-        <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl p-5 shadow-sm space-y-3">
+        <div className="bg-surface border border-stroke rounded-[4px] p-5 space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-teal-500/10 border border-teal-500/30 text-teal-400">
+              <div className="p-2 rounded-[4px] bg-teal-500/10 border border-teal-500/30 text-teal-400">
                 <Cloud className="w-5 h-5" />
               </div>
               <div>
-                <div className="font-bold text-sm text-white light:text-neutral-900 flex items-center gap-2">
+                <div className="font-bold text-sm text-fg flex items-center gap-2">
                   <span>{lang === 'ar' ? 'نشر الموقع واستضافته على Netlify مجاناً' : 'Deploy & Host on Netlify'}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30 font-bold">
+                  <span className="text-[10px] px-2 py-0.5 rounded-[4px] bg-teal-500/20 text-teal-300 border border-teal-500/30 font-bold">
                     {lang === 'ar' ? 'جاهز للنشر بنقرة واحدة' : 'Production Ready'}
                   </span>
                 </div>
-                <p className="text-xs text-neutral-400 light:text-neutral-500 mt-0.5">
+                <p className="text-xs text-neutral-400 mt-0.5">
                   {lang === 'ar'
                     ? 'تم تجهيز ملفات الاستضافة (dist) في حزمة مضغوطة جاهزة للسحب والإفلات على app.netlify.com/drop أو الرفع عبر GitHub.'
                     : 'The project is pre-built into dist.zip ready for instant drag-and-drop on Netlify Drop or GitHub.'}
@@ -371,7 +371,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <button
                 type="button"
                 onClick={() => setShowNetlifyModal(true)}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 text-xs font-semibold transition-colors"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-[4px] bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 text-xs font-semibold transition-colors"
               >
                 <HelpCircle className="w-4 h-4 text-teal-400" />
                 <span>{lang === 'ar' ? 'دليل خطوات الاستضافة على Netlify' : 'View Netlify Guide'}</span>
@@ -385,18 +385,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* 1. Fast Google Apps Script Backend Code Modal                             */}
       {/* ========================================================================= */}
       {showScriptModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#1a1a1a] border border-[#383838] rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-surface border border-stroke rounded-[4px] w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="p-4 border-b border-[#383838] flex items-center justify-between bg-[#141414]">
+            <div className="p-4 border-b border-stroke flex items-center justify-between bg-canvas">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                <div className="p-2 rounded-[4px] bg-warning-bg0/10 border border-warning-border text-warning-fg">
                   <Code className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="font-extrabold text-sm text-white flex items-center gap-2">
+                  <div className="font-extrabold text-sm text-fg flex items-center gap-2">
                     <span>{lang === 'ar' ? 'كود Google Apps Script السريع (Code.gs)' : 'Fast Google Apps Script Backend (Code.gs)'}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-success-bg0/20 text-success-fg font-bold border border-success-border">
                       الإصدار 4.0.0 Ultra-Fast
                     </span>
                   </div>
@@ -408,20 +408,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <button
                 type="button"
                 onClick={() => setShowScriptModal(false)}
-                className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+                className="p-1.5 rounded-[4px] text-neutral-400 hover:text-fg hover:bg-neutral-800 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex items-center border-b border-[#383838] bg-[#161616] px-4 gap-2">
+            <div className="flex items-center border-b border-stroke bg-surface px-4 gap-2">
               <button
                 type="button"
                 onClick={() => setScriptModalTab('code')}
                 className={`py-3 px-4 text-xs font-bold border-b-2 transition-colors flex items-center gap-2 ${
                   scriptModalTab === 'code'
-                    ? 'border-amber-400 text-amber-300 bg-amber-500/5'
+                    ? 'border-warning-border text-warning-fg bg-warning-bg0/5'
                     : 'border-transparent text-neutral-400 hover:text-neutral-200'
                 }`}
               >
@@ -434,7 +434,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 onClick={() => setScriptModalTab('instructions')}
                 className={`py-3 px-4 text-xs font-bold border-b-2 transition-colors flex items-center gap-2 ${
                   scriptModalTab === 'instructions'
-                    ? 'border-blue-400 text-blue-300 bg-blue-500/5'
+                    ? 'border-brand text-brand bg-brand-subtle0/5'
                     : 'border-transparent text-neutral-400 hover:text-neutral-200'
                 }`}
               >
@@ -447,7 +447,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 onClick={() => setScriptModalTab('faq')}
                 className={`py-3 px-4 text-xs font-bold border-b-2 transition-colors flex items-center gap-2 ${
                   scriptModalTab === 'faq'
-                    ? 'border-emerald-400 text-emerald-300 bg-emerald-500/5'
+                    ? 'border-success-border text-success-fg bg-success-bg0/5'
                     : 'border-transparent text-neutral-400 hover:text-neutral-200'
                 }`}
               >
@@ -461,18 +461,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               {scriptModalTab === 'code' && (
                 <div className="space-y-3">
                   {/* Action Bar */}
-                  <div className="flex items-center justify-between flex-wrap gap-2 p-3 rounded-xl bg-neutral-900 border border-neutral-800">
+                  <div className="flex items-center justify-between flex-wrap gap-2 p-3 rounded-[4px] bg-neutral-900 border border-neutral-800">
                     <div className="flex items-center gap-2 text-neutral-300">
                       <span className="font-semibold">{lang === 'ar' ? 'الملف:' : 'File:'}</span>
-                      <code className="text-amber-400 font-mono font-bold bg-black/40 px-2 py-0.5 rounded">Code.gs</code>
-                      <span className="text-emerald-400 font-semibold">• سريع وخفيف جداً</span>
+                      <code className="text-warning-fg font-mono font-bold bg-black/40 px-2 py-0.5 rounded">Code.gs</code>
+                      <span className="text-success-fg font-semibold">• سريع وخفيف جداً</span>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <a
                         href="/download/Code.gs"
                         download="Code.gs"
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs shadow transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-success-bg hover:bg-success-bg text-fg font-bold text-xs shadow transition-colors"
                       >
                         <Download className="w-3.5 h-3.5" />
                         <span>{lang === 'ar' ? 'تحميل ملف Code.gs' : 'Download Code.gs'}</span>
@@ -485,17 +485,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           setCopiedCode(true);
                           setTimeout(() => setCopiedCode(false), 2500);
                         }}
-                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow transition-colors cursor-pointer"
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-[4px] bg-blue-600 hover:bg-brand-subtle0 text-fg font-bold text-xs shadow transition-colors cursor-pointer"
                       >
-                        {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copiedCode ? <Check className="w-3.5 h-3.5 text-success-fg" /> : <Copy className="w-3.5 h-3.5" />}
                         <span>{copiedCode ? (lang === 'ar' ? 'تم نسخ الكود!' : 'Copied!') : (lang === 'ar' ? 'نسخ الكود' : 'Copy Code')}</span>
                       </button>
                     </div>
                   </div>
 
                   {/* Code Container */}
-                  <div className="relative border border-[#383838] rounded-xl overflow-hidden bg-[#0d0d0d]">
-                    <pre className="p-4 text-[11px] font-mono text-emerald-400 overflow-x-auto max-h-[500px] leading-relaxed selection:bg-emerald-900 selection:text-white">
+                  <div className="relative border border-stroke rounded-[4px] overflow-hidden bg-canvas">
+                    <pre className="p-4 text-[11px] font-mono text-success-fg overflow-x-auto max-h-[500px] leading-relaxed selection:bg-success-bg selection:text-fg">
                       {APPS_SCRIPT_CODE}
                     </pre>
                   </div>
@@ -504,8 +504,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
               {scriptModalTab === 'instructions' && (
                 <div className="space-y-4 text-neutral-200">
-                  <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-800/40 space-y-2">
-                    <div className="font-bold text-blue-300 text-sm flex items-center gap-2">
+                  <div className="p-4 rounded-[4px] bg-brand-subtle border border-brand space-y-2">
+                    <div className="font-bold text-brand text-sm flex items-center gap-2">
                       <span>🚀</span>
                       <span>{lang === 'ar' ? 'خطوات الربط والتفعيل في دقيقة واحدة:' : '1-Minute Setup Guide:'}</span>
                     </div>
@@ -517,9 +517,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </div>
 
                   <div className="space-y-3">
-                    <div className="p-3.5 bg-neutral-900 border border-neutral-800 rounded-xl space-y-1">
-                      <div className="font-bold text-white flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] flex items-center justify-center font-bold">1</span>
+                    <div className="p-3.5 bg-neutral-900 border border-neutral-800 rounded-[4px] space-y-1">
+                      <div className="font-bold text-fg flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-[4px] bg-blue-600 text-fg text-[11px] flex items-center justify-center font-bold">1</span>
                         <span>{lang === 'ar' ? 'افتح جدول Google Sheet:' : 'Open Google Sheet:'}</span>
                       </div>
                       <p className="text-neutral-400 text-xs mr-7">
@@ -529,9 +529,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       </p>
                     </div>
 
-                    <div className="p-3.5 bg-neutral-900 border border-neutral-800 rounded-xl space-y-1">
-                      <div className="font-bold text-white flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] flex items-center justify-center font-bold">2</span>
+                    <div className="p-3.5 bg-neutral-900 border border-neutral-800 rounded-[4px] space-y-1">
+                      <div className="font-bold text-fg flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-[4px] bg-blue-600 text-fg text-[11px] flex items-center justify-center font-bold">2</span>
                         <span>{lang === 'ar' ? 'افتح محرر Apps Script:' : 'Open Apps Script:'}</span>
                       </div>
                       <p className="text-neutral-400 text-xs mr-7">
@@ -541,9 +541,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       </p>
                     </div>
 
-                    <div className="p-3.5 bg-neutral-900 border border-neutral-800 rounded-xl space-y-1">
-                      <div className="font-bold text-white flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] flex items-center justify-center font-bold">3</span>
+                    <div className="p-3.5 bg-neutral-900 border border-neutral-800 rounded-[4px] space-y-1">
+                      <div className="font-bold text-fg flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-[4px] bg-blue-600 text-fg text-[11px] flex items-center justify-center font-bold">3</span>
                         <span>{lang === 'ar' ? 'لصق الكود وحفظه:' : 'Paste & Save Code:'}</span>
                       </div>
                       <p className="text-neutral-400 text-xs mr-7">
@@ -553,24 +553,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       </p>
                     </div>
 
-                    <div className="p-3.5 bg-amber-950/20 border border-amber-800/40 rounded-xl space-y-2">
-                      <div className="font-bold text-amber-300 flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-amber-500 text-black text-[11px] flex items-center justify-center font-bold">4</span>
+                    <div className="p-3.5 bg-warning-bg border border-warning-border rounded-[4px] space-y-2">
+                      <div className="font-bold text-warning-fg flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-[4px] bg-warning-bg0 text-black text-[11px] flex items-center justify-center font-bold">4</span>
                         <span>{lang === 'ar' ? 'نشر تطبيق الويب (New Deployment):' : 'Deploy as Web App:'}</span>
                       </div>
                       <div className="mr-7 space-y-1.5 text-neutral-300 text-xs">
                         <p>• اضغط في أعلى اليمين على <strong>Deploy (نشر)</strong> &gt; <strong>New deployment (نشر جديد)</strong>.</p>
                         <p>• اختر <strong>Web app (تطبيق ويب)</strong>.</p>
-                        <p>• في <strong>Execute as</strong> اختر: <strong className="text-white">Me (أنا)</strong>.</p>
-                        <p className="p-2 rounded bg-amber-500/20 border border-amber-500/40 text-amber-200 font-bold">
+                        <p>• في <strong>Execute as</strong> اختر: <strong className="text-fg">Me (أنا)</strong>.</p>
+                        <p className="p-2 rounded bg-warning-bg0/20 border border-warning-border text-warning-fg font-bold">
                           ⚠️ في خانة "Who has access" اختر: "Anyone" (أي شخص).
                         </p>
                       </div>
                     </div>
 
-                    <div className="p-3.5 bg-neutral-900 border border-neutral-800 rounded-xl space-y-1">
-                      <div className="font-bold text-white flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] flex items-center justify-center font-bold">5</span>
+                    <div className="p-3.5 bg-neutral-900 border border-neutral-800 rounded-[4px] space-y-1">
+                      <div className="font-bold text-fg flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-[4px] bg-blue-600 text-fg text-[11px] flex items-center justify-center font-bold">5</span>
                         <span>{lang === 'ar' ? 'منح الإذن ونسخ الرابط:' : 'Authorize & Copy URL:'}</span>
                       </div>
                       <p className="text-neutral-400 text-xs mr-7">
@@ -585,8 +585,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
               {scriptModalTab === 'faq' && (
                 <div className="space-y-3 text-neutral-200">
-                  <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-xl space-y-2">
-                    <div className="font-bold text-amber-400 flex items-center gap-2">
+                  <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-[4px] space-y-2">
+                    <div className="font-bold text-warning-fg flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4 shrink-0" />
                       <span>{lang === 'ar' ? 'تأكد من اختيار "Anyone" عند النشر' : 'Ensure Access is set to Anyone'}</span>
                     </div>
@@ -597,8 +597,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     </p>
                   </div>
 
-                  <div className="p-4 bg-emerald-950/30 border border-emerald-800/40 rounded-xl space-y-2">
-                    <div className="font-bold text-emerald-300 flex items-center gap-2">
+                  <div className="p-4 bg-success-bg border border-success-border rounded-[4px] space-y-2">
+                    <div className="font-bold text-success-fg flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 shrink-0" />
                       <span>{lang === 'ar' ? 'تنظيم الشيت وروابط الصور التلقائي' : 'Automatic Sheet Layout & Image Links'}</span>
                     </div>
@@ -613,11 +613,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* Modal Footer */}
-            <div className="p-3 bg-[#141414] border-t border-[#383838] flex items-center justify-between">
+            <div className="p-3 bg-canvas border-t border-stroke flex items-center justify-between">
               <a
                 href="/download/Code.gs"
                 download="Code.gs"
-                className="px-3.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                className="px-3.5 py-1.5 rounded-[4px] bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>{lang === 'ar' ? 'تحميل ملف Code.gs' : 'Download Code.gs'}</span>
@@ -626,7 +626,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <button
                 type="button"
                 onClick={() => setShowScriptModal(false)}
-                className="px-5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors cursor-pointer"
+                className="px-5 py-1.5 rounded-[4px] bg-blue-600 hover:bg-brand-subtle0 text-fg text-xs font-bold transition-colors cursor-pointer"
               >
                 {lang === 'ar' ? 'إغلاق' : 'Close'}
               </button>
@@ -639,19 +639,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* 2. Interactive Cloud Connection Diagnostics Modal                         */}
       {/* ========================================================================= */}
       {showDiagnosticModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#1f1f1f] border border-[#383838] rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden">
-            <div className="p-4 border-b border-[#383838] flex items-center justify-between bg-[#191919]">
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-surface border border-stroke rounded-[4px] w-full max-w-xl overflow-hidden">
+            <div className="p-4 border-b border-stroke flex items-center justify-between bg-surface">
               <div className="flex items-center gap-2">
-                <Activity className="w-5 h-5 text-blue-400" />
-                <span className="font-bold text-sm text-white">
+                <Activity className="w-5 h-5 text-brand" />
+                <span className="font-bold text-sm text-fg">
                   {lang === 'ar' ? 'تقرير فحص وتشخيص الاتصال السحابي' : 'Cloud Connection Diagnostics Report'}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setShowDiagnosticModal(false)}
-                className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800"
+                className="p-1 rounded-[4px] text-neutral-400 hover:text-fg hover:bg-neutral-800"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -660,8 +660,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="p-5 space-y-4 text-xs">
               {isDiagnosing ? (
                 <div className="py-8 text-center space-y-3">
-                  <RefreshCw className="w-8 h-8 text-blue-400 animate-spin mx-auto" />
-                  <div className="font-bold text-white text-sm">
+                  <RefreshCw className="w-8 h-8 text-brand animate-spin mx-auto" />
+                  <div className="font-bold text-fg text-sm">
                     {lang === 'ar' ? 'جارِ فحص الاتصال بالخادم السحابي...' : 'Testing Cloud Connection...'}
                   </div>
                   <p className="text-neutral-400 text-xs">
@@ -671,15 +671,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               ) : diagnosticResult ? (
                 <div className="space-y-4">
                   {/* Status Banner */}
-                  <div className={`p-4 rounded-xl border flex items-start gap-3 ${
+                  <div className={`p-4 rounded-[4px] border flex items-start gap-3 ${
                     diagnosticResult.success
-                      ? 'bg-emerald-950/40 border-emerald-800/50 text-emerald-200'
-                      : 'bg-rose-950/40 border-rose-800/50 text-rose-200'
+                      ? 'bg-success-bg border-success-border text-success-fg'
+                      : 'bg-critical-bg border-critical-border text-critical-fg'
                   }`}>
                     {diagnosticResult.success ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-5 h-5 text-success-fg shrink-0 mt-0.5" />
                     ) : (
-                      <XCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                      <XCircle className="w-5 h-5 text-critical-fg shrink-0 mt-0.5" />
                     )}
                     <div className="space-y-1">
                       <div className="font-bold text-sm">
@@ -694,17 +694,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </div>
 
                   {/* Diagnostic Details Grid */}
-                  <div className="p-3 bg-neutral-900 border border-neutral-800 rounded-xl space-y-2 font-mono text-[11px]">
+                  <div className="p-3 bg-neutral-900 border border-neutral-800 rounded-[4px] space-y-2 font-mono text-[11px]">
                     <div className="flex items-center justify-between text-neutral-300">
                       <span className="text-neutral-500">صيغة الرابط (URL Format):</span>
-                      <span className={urlValidation.isValid ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+                      <span className={urlValidation.isValid ? 'text-success-fg font-bold' : 'text-warning-fg font-bold'}>
                         {urlValidation.isValid ? 'صحيح (Valid /exec)' : 'يحتاج مراجعة'}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between text-neutral-300">
                       <span className="text-neutral-500">حالة الاستجابة (Handshake):</span>
-                      <span className={diagnosticResult.success ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                      <span className={diagnosticResult.success ? 'text-success-fg font-bold' : 'text-critical-fg font-bold'}>
                         {diagnosticResult.success ? '200 OK (متصل)' : 'فشل الاتصال'}
                       </span>
                     </div>
@@ -712,21 +712,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     {diagnosticResult.patientsCount !== undefined && (
                       <div className="flex items-center justify-between text-neutral-300">
                         <span className="text-neutral-500">سجلات المرضى في الشيت:</span>
-                        <span className="text-blue-400 font-bold">{diagnosticResult.patientsCount} مريض</span>
+                        <span className="text-brand font-bold">{diagnosticResult.patientsCount} مريض</span>
                       </div>
                     )}
 
                     {diagnosticResult.followUpsCount !== undefined && (
                       <div className="flex items-center justify-between text-neutral-300">
                         <span className="text-neutral-500">المتابعات السريرية:</span>
-                        <span className="text-blue-400 font-bold">{diagnosticResult.followUpsCount} متابعة</span>
+                        <span className="text-brand font-bold">{diagnosticResult.followUpsCount} متابعة</span>
                       </div>
                     )}
 
                     {diagnosticResult.spreadsheetName && (
                       <div className="flex items-center justify-between text-neutral-300">
                         <span className="text-neutral-500">اسم جدول البيانات:</span>
-                        <span className="text-emerald-400 font-bold">{diagnosticResult.spreadsheetName}</span>
+                        <span className="text-success-fg font-bold">{diagnosticResult.spreadsheetName}</span>
                       </div>
                     )}
                   </div>
@@ -741,7 +741,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           setShowScriptModal(true);
                           setScriptModalTab('faq');
                         }}
-                        className="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-black font-bold text-xs flex items-center gap-1.5 transition-colors"
+                        className="px-3.5 py-2 rounded-[4px] bg-warning-bg hover:bg-warning-bg0 text-black font-bold text-xs flex items-center gap-1.5 transition-colors"
                       >
                         <HelpCircle className="w-4 h-4" />
                         <span>{lang === 'ar' ? 'عرض حلول المشكلات في الدليل' : 'View Troubleshooting'}</span>
@@ -750,7 +750,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       <button
                         type="button"
                         onClick={handleRunDiagnostic}
-                        className="px-4 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white font-semibold text-xs"
+                        className="px-4 py-2 rounded-[4px] bg-neutral-800 hover:bg-neutral-700 text-fg font-semibold text-xs"
                       >
                         {lang === 'ar' ? 'إعادة الفحص' : 'Retry'}
                       </button>
@@ -760,11 +760,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               ) : null}
             </div>
 
-            <div className="p-3 bg-[#191919] border-t border-[#383838] flex justify-end">
+            <div className="p-3 bg-surface border-t border-stroke flex justify-end">
               <button
                 type="button"
                 onClick={() => setShowDiagnosticModal(false)}
-                className="px-4 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold"
+                className="px-4 py-1.5 rounded-[4px] bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold"
               >
                 {lang === 'ar' ? 'إغلاق' : 'Close'}
               </button>
@@ -777,26 +777,26 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* 3. Netlify Guide Modal                                                    */}
       {/* ========================================================================= */}
       {showNetlifyModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#1f1f1f] border border-[#383838] rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-            <div className="p-4 border-b border-[#383838] flex items-center justify-between bg-[#191919]">
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-surface border border-stroke rounded-[4px] w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-stroke flex items-center justify-between bg-surface">
               <div className="flex items-center gap-2">
                 <Cloud className="w-5 h-5 text-teal-400" />
-                <span className="font-bold text-sm text-white">
+                <span className="font-bold text-sm text-fg">
                   {lang === 'ar' ? 'طريقة استضافة ونشر الموقع على Netlify' : 'How to Deploy on Netlify'}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setShowNetlifyModal(false)}
-                className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800"
+                className="p-1 rounded-[4px] text-neutral-400 hover:text-fg hover:bg-neutral-800"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-5 space-y-5 overflow-y-auto flex-1 text-xs">
-              <div className="p-4 bg-teal-950/30 border border-teal-800/40 rounded-xl space-y-3">
+              <div className="p-4 bg-teal-950/30 border border-teal-800/40 rounded-[4px] space-y-3">
                 <span className="font-bold text-teal-300 text-sm flex items-center gap-1.5">
                   <span>⚡</span>
                   <span>{lang === 'ar' ? 'الربط المباشر عبر GitHub أو Netlify Drop' : 'Direct Deployment'}</span>
@@ -809,11 +809,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
             </div>
 
-            <div className="p-3 bg-[#191919] border-t border-[#383838] flex justify-end">
+            <div className="p-3 bg-surface border-t border-stroke flex justify-end">
               <button
                 type="button"
                 onClick={() => setShowNetlifyModal(false)}
-                className="px-4 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold"
+                className="px-4 py-1.5 rounded-[4px] bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold"
               >
                 {lang === 'ar' ? 'إغلاق' : 'Close'}
               </button>

@@ -44,14 +44,14 @@ export const InventoryForecastView: React.FC<InventoryForecastViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Header and Summary */}
-      <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl p-5 shadow-sm space-y-4">
+      <div className="bg-surface border border-stroke rounded-[4px] p-5 space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <div className="font-extrabold text-lg text-white light:text-neutral-900 flex items-center gap-2">
-              <Boxes className="w-5 h-5 text-blue-400" />
+            <div className="font-extrabold text-lg text-fg flex items-center gap-2">
+              <Boxes className="w-5 h-5 text-brand" />
               <span>{lang === 'ar' ? 'التنبؤ الذكي بطلب الأدوية المزمنة والمخزون' : 'Demand Forecasting & Inventory Engine'}</span>
             </div>
-            <p className="text-xs text-neutral-400 light:text-neutral-500 mt-1 max-w-3xl">
+            <p className="text-xs text-neutral-400 mt-1 max-w-3xl">
               {lang === 'ar'
                 ? 'تحليل جدول استحقاق الوصفات المزمنة لكافة المرضى النشطين وتحديد الاحتياج المتوقع للطلبيات القادمة لتفادي نفاد الأصناف الحيوية.'
                 : 'Aggregated demand projection based on exact chronic refill timelines across all active patients to prevent critical stock-outs.'}
@@ -60,7 +60,7 @@ export const InventoryForecastView: React.FC<InventoryForecastViewProps> = ({
 
           <button
             onClick={handleExportOrder}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#0f6cbd] hover:bg-[#115ea3] text-white shadow-sm transition-colors"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-[4px] text-xs font-bold bg-brand hover:bg-brand-hover text-on-brand transition-colors"
           >
             <Download className="w-4 h-4" />
             <span>{lang === 'ar' ? 'تصدير طلبية التوريد (CSV)' : 'Export Requisition'}</span>
@@ -69,37 +69,37 @@ export const InventoryForecastView: React.FC<InventoryForecastViewProps> = ({
 
         {/* Metric summary badges */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-          <div className="bg-[#141414] light:bg-neutral-50 border border-[#2e2e2e] light:border-neutral-200 p-3.5 rounded-lg flex items-center justify-between">
+          <div className="bg-canvas border border-stroke p-3.5 rounded-[4px] flex items-center justify-between">
             <div>
               <div className="text-xs text-neutral-400">{lang === 'ar' ? 'الأصناف المزمنة المتابعة' : 'Tracked Chronic SKUs'}</div>
-              <div className="text-2xl font-extrabold text-white light:text-neutral-900 mt-1">{forecastItems.length}</div>
+              <div className="text-2xl font-extrabold text-fg mt-1">{forecastItems.length}</div>
             </div>
-            <Boxes className="w-6 h-6 text-blue-400" />
+            <Boxes className="w-6 h-6 text-brand" />
           </div>
 
-          <div className="bg-rose-950/20 border border-rose-800/40 p-3.5 rounded-lg flex items-center justify-between">
+          <div className="bg-critical-bg border border-critical-border p-3.5 rounded-[4px] flex items-center justify-between">
             <div>
-              <div className="text-xs text-rose-300 font-semibold">{lang === 'ar' ? 'عبوات مطلوبة خلال 7 أيام' : 'Urgent (7-Day Demand)'}</div>
-              <div className="text-2xl font-extrabold text-rose-400 mt-1">{totalUrgentPacks}</div>
+              <div className="text-xs text-critical-fg font-semibold">{lang === 'ar' ? 'عبوات مطلوبة خلال 7 أيام' : 'Urgent (7-Day Demand)'}</div>
+              <div className="text-2xl font-extrabold text-critical-fg mt-1">{totalUrgentPacks}</div>
             </div>
-            <AlertOctagon className="w-6 h-6 text-rose-400" />
+            <AlertOctagon className="w-6 h-6 text-critical-fg" />
           </div>
 
-          <div className="bg-blue-950/20 border border-blue-800/40 p-3.5 rounded-lg flex items-center justify-between">
+          <div className="bg-brand-subtle border border-brand p-3.5 rounded-[4px] flex items-center justify-between">
             <div>
-              <div className="text-xs text-blue-300 font-semibold">{lang === 'ar' ? 'إجمالي الاحتياج الشهري التقديري' : '30-Day Total Projected Boxes'}</div>
-              <div className="text-2xl font-extrabold text-blue-400 mt-1">{total30DayPacks}</div>
+              <div className="text-xs text-brand font-semibold">{lang === 'ar' ? 'إجمالي الاحتياج الشهري التقديري' : '30-Day Total Projected Boxes'}</div>
+              <div className="text-2xl font-extrabold text-brand mt-1">{total30DayPacks}</div>
             </div>
-            <ShoppingCart className="w-6 h-6 text-blue-400" />
+            <ShoppingCart className="w-6 h-6 text-brand" />
           </div>
         </div>
       </div>
 
       {/* Forecast Table */}
-      <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-surface border border-stroke rounded-[4px] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-right dir-rtl text-xs">
-            <thead className="bg-[#292929] light:bg-neutral-100 text-neutral-300 light:text-neutral-700 font-bold border-b border-[#383838]">
+            <thead className="bg-subtle text-neutral-300 font-bold border-b border-stroke">
               <tr>
                 <th className="py-3 px-4">{lang === 'ar' ? 'اسم الدواء (العلامة التجارية)' : 'Brand Name'}</th>
                 <th className="py-3 px-3">{lang === 'ar' ? 'الفئة العلاجية' : 'Generic Class'}</th>
@@ -110,12 +110,12 @@ export const InventoryForecastView: React.FC<InventoryForecastViewProps> = ({
                 <th className="py-3 px-4 text-center">{lang === 'ar' ? 'أولوية التوريد' : 'Priority'}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2e2e2e] light:divide-neutral-200 text-neutral-200 light:text-neutral-800">
+            <tbody className="divide-y divide-stroke text-neutral-200">
               {forecastItems.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-12 text-neutral-400">
                     <div className="space-y-1">
-                      <div className="font-semibold text-neutral-300 light:text-neutral-700">
+                      <div className="font-semibold text-neutral-300">
                         {lang === 'ar' ? 'لا توجد أدوية أو مرضى لحساب توقعات المخزون حالياً' : 'No Active Medications to Forecast'}
                       </div>
                       <div className="text-xs text-neutral-500">
@@ -126,40 +126,40 @@ export const InventoryForecastView: React.FC<InventoryForecastViewProps> = ({
                 </tr>
               ) : (
                 forecastItems.map((item, idx) => (
-                <tr key={idx} className="hover:bg-neutral-800/40 light:hover:bg-neutral-50 transition-colors">
-                  <td className="py-3.5 px-4 font-bold text-white light:text-neutral-900">
+                <tr key={idx} className="hover:bg-neutral-800/40 transition-colors">
+                  <td className="py-3.5 px-4 font-bold text-fg">
                     {item.drugName}
                   </td>
                   <td className="py-3.5 px-3">
-                    <span className="font-mono text-neutral-300 light:text-neutral-600 bg-neutral-800/60 light:bg-neutral-200 px-2 py-0.5 rounded text-[11px]">
+                    <span className="font-mono text-neutral-300 bg-neutral-800/60 px-2 py-0.5 rounded text-[11px]">
                       {item.genericClass}
                     </span>
                   </td>
-                  <td className="py-3.5 px-3 font-semibold text-neutral-300 light:text-neutral-700">
+                  <td className="py-3.5 px-3 font-semibold text-neutral-300">
                     {item.activePatientsCount} {lang === 'ar' ? 'مرضى' : 'pts'}
                   </td>
                   <td className="py-3.5 px-3">
                     {item.demand7Days > 0 ? (
-                      <span className="font-bold text-rose-400 bg-rose-950/60 px-2 py-0.5 rounded border border-rose-800/40">
+                      <span className="font-bold text-critical-fg bg-critical-bg px-2 py-0.5 rounded border border-critical-border">
                         {item.demand7Days} {lang === 'ar' ? 'عبوة' : 'packs'}
                       </span>
                     ) : (
                       <span className="text-neutral-500">0</span>
                     )}
                   </td>
-                  <td className="py-3.5 px-3 font-semibold text-amber-400">
+                  <td className="py-3.5 px-3 font-semibold text-warning-fg">
                     {item.demand14Days}
                   </td>
-                  <td className="py-3.5 px-3 font-extrabold text-blue-400 text-sm">
+                  <td className="py-3.5 px-3 font-extrabold text-brand text-sm">
                     {item.estimatedBoxesNeeded}
                   </td>
                   <td className="py-3.5 px-4 text-center">
                     {item.status === 'critical' ? (
-                      <span className="inline-block text-[10px] font-extrabold px-2 py-0.5 rounded bg-rose-950 text-rose-400 border border-rose-800 animate-pulse">
+                      <span className="inline-block text-[10px] font-extrabold px-2 py-0.5 rounded bg-critical-bg text-critical-fg border border-critical-border animate-pulse">
                         {lang === 'ar' ? 'حرج وعاجل' : 'Urgent Restock'}
                       </span>
                     ) : item.status === 'warning' ? (
-                      <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800">
+                      <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-warning-bg text-warning-fg border border-warning-border">
                         {lang === 'ar' ? 'متابعة قريبة' : 'Medium Priority'}
                       </span>
                     ) : (

@@ -61,7 +61,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       labelEn: 'Clinical Follow-Up',
       icon: <Stethoscope className="w-4 h-4" />,
       badge: activeFollowUpsCount,
-      badgeColor: 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
+      badgeColor: 'bg-warning-bg0/20 text-warning-fg border border-warning-border',
     },
     {
       id: 'timeline',
@@ -69,7 +69,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       labelEn: 'Refill Timeline',
       icon: <BellRing className="w-4 h-4" />,
       badge: dueRefillsCount,
-      badgeColor: 'bg-rose-500/20 text-rose-400 border border-rose-500/30',
+      badgeColor: 'bg-critical-bg0/20 text-critical-fg border border-critical-border',
     },
     {
       id: 'inventory',
@@ -98,24 +98,25 @@ export const Navigation: React.FC<NavigationProps> = ({
   ];
 
   return (
-    <nav className="bg-[#1f1f1f] light:bg-white border-b border-[#383838] light:border-neutral-200 px-4 md:px-6 flex items-center gap-1 overflow-x-auto scrollbar-none sticky top-16 z-30 shadow-sm">
+    <nav aria-label={lang === 'ar' ? 'التنقل الرئيسي' : 'Main navigation'} className="fluent-pivot bg-surface border-b border-stroke px-4 md:px-6 flex items-center gap-1 overflow-x-auto scrollbar-none sticky top-0 z-30">
       {navItems.map(item => {
         const isActive = activeView === item.id;
         return (
           <button
             key={item.id}
             onClick={() => onSelectView(item.id)}
-            className={`flex items-center gap-2 py-3 px-3.5 text-xs font-semibold whitespace-nowrap border-b-2 transition-all cursor-pointer ${
+            aria-current={isActive ? 'page' : undefined}
+            className={`flex items-center gap-2 py-2 px-3 text-xs font-semibold whitespace-nowrap border-b-[3px] transition-colors duration-150 cursor-pointer ${
               isActive
-                ? 'border-[#479ef5] text-[#479ef5] bg-[#292929]/50 light:bg-blue-50/50'
-                : 'border-transparent text-neutral-400 light:text-neutral-600 hover:text-white light:hover:text-black hover:bg-neutral-800/40'
+                ? 'border-brand text-brand bg-subtle/50 '
+                : 'border-transparent text-neutral-400 hover:text-fg hover:bg-neutral-800/40'
             }`}
           >
             {item.icon}
             <span>{lang === 'ar' ? item.labelAr : item.labelEn}</span>
             {item.badge !== undefined && item.badge > 0 && (
               <span
-                className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                className={`text-[10px] font-bold px-1.5 py-0.2 rounded-[4px] ${
                   item.badgeColor || 'bg-neutral-700 text-neutral-200'
                 }`}
               >

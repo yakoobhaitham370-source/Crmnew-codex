@@ -1,13 +1,134 @@
 @import "tailwindcss";
 
-@layer base {
-  body {
-    font-family: 'Tajawal', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  }
+@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant light (&:where(.light, .light *));
 
-  [dir="ltr"] body {
-    font-family: 'Plus Jakarta Sans', 'Tajawal', system-ui, -apple-system, sans-serif;
+:root {
+  color-scheme: light;
+  --canvas: #FAF9F8;
+  --surface: #FFFFFF;
+  --subtle: #F3F2F1;
+  --hover: #EDEBE9;
+  --stroke: #EDEBE9;
+  --fg: #242424;
+  --muted: #605E5C;
+  --brand: #0078D4;
+  --brand-hover: #106EBE;
+  --brand-pressed: #005A9E;
+  --brand-subtle: #EFF6FC;
+  --on-brand: #FFFFFF;
+  --success-bg: #E6F4EA;
+  --success-fg: #137333;
+  --success-border: #CEEAD6;
+  --warning-bg: #FFF4CE;
+  --warning-fg: #7A5B00;
+  --warning-border: #FFE699;
+  --critical-bg: #FDF3F3;
+  --critical-fg: #A80000;
+  --critical-border: #E0A8A8;
+}
+
+:root.dark {
+  color-scheme: dark;
+  --canvas: #11100F;
+  --surface: #201F1E;
+  --subtle: #252423;
+  --hover: #2D2C2C;
+  --stroke: #3B3A39;
+  --fg: #F3F2F1;
+  --muted: #A19F9D;
+  --brand: #2899F5;
+  --brand-hover: #60A5FA;
+  --brand-pressed: #2899F5;
+  --brand-subtle: #172C3F;
+  --on-brand: #11100F;
+  --success-bg: #0F3822;
+  --success-fg: #81C995;
+  --success-border: #1E5233;
+  --warning-bg: #3A3118;
+  --warning-fg: #F3D370;
+  --warning-border: #6A5A20;
+  --critical-bg: #3A1D1D;
+  --critical-fg: #F87171;
+  --critical-border: #7F1D1D;
+}
+
+@theme inline {
+  --font-sans: system-ui, "Segoe UI", -apple-system, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-hover: var(--hover);
+  --color-stroke: var(--stroke);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-on-brand: var(--on-brand);
+  --color-success-bg: var(--success-bg);
+  --color-success-fg: var(--success-fg);
+  --color-success-border: var(--success-border);
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-fg: var(--warning-fg);
+  --color-warning-border: var(--warning-border);
+  --color-critical-bg: var(--critical-bg);
+  --color-critical-fg: var(--critical-fg);
+  --color-critical-border: var(--critical-border);
+}
+
+@layer base {
+  body { font-family: var(--font-sans); background: var(--canvas); color: var(--fg); }
+  button, input, select, textarea, a { transition: background-color 150ms, color 150ms, border-color 150ms; }
+  button:not(:disabled), select, summary { cursor: pointer; }
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible,
+  textarea:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
   }
+  input, select, textarea { accent-color: var(--brand); caret-color: var(--brand); }
+  input:hover, select:hover, textarea:hover { border-color: var(--muted); }
+  input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
+  button:hover:not(:disabled) { filter: brightness(.96); }
+  a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  button:active:not(:disabled) { filter: brightness(.92); }
+  button:disabled { cursor: not-allowed; opacity: .5; }
+  th, td { text-align: start; }
+  th { font-weight: 600; }
+  tbody tr:hover { background: var(--hover); }
+  ::selection { background: var(--brand); color: var(--on-brand); }
+  * { scrollbar-color: var(--stroke) var(--canvas); scrollbar-width: thin; }
+}
+
+/* Compatibility palette for existing clinical views, sharing the same Fluent tokens. */
+@layer utilities {
+  .text-neutral-100, .text-neutral-200, .text-neutral-300 { color: var(--fg); }
+  .text-neutral-400, .text-neutral-500, .text-neutral-600, .text-neutral-700 { color: var(--muted); }
+  .bg-neutral-700, .bg-neutral-800, .bg-neutral-900 { background-color: var(--subtle); }
+  .border-neutral-600, .border-neutral-700, .border-neutral-800 { border-color: var(--stroke); }
+  .divide-neutral-700 > :not(:last-child) { border-color: var(--stroke); }
+  .bg-brand:hover { background-color: var(--brand-hover); }
+  .bg-brand:active { background-color: var(--brand-pressed); }
+  .font-mono { font-variant-numeric: tabular-nums; }
+  .fluent-header { min-height: 56px; height: auto; padding-block: 8px; flex-wrap: wrap; }
+  .fluent-pivot { top: 0; }
+  .fluent-pivot button { min-height: 40px; border-radius: 0; }
+  .fluent-metrics > div { padding: 12px; }
+  .fluent-metrics > div > div.absolute { display: none; }
+  .fluent-metrics .text-3xl { font-size: 24px; line-height: 32px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .fluent-dashboard table th { padding: 10px 12px; white-space: nowrap; }
+  .fluent-dashboard table td { padding: 10px 12px; }
+  .fluent-dashboard table { min-width: 960px; }
+  .fluent-dashboard .section-header { min-height: 40px; padding: 8px 12px; flex-wrap: wrap; gap: 8px; }
+  @media (max-width: 639px) {
+    .dispatch-empty { position: sticky; inset-inline-start: 12px; width: calc(100vw - 64px); margin-inline: 0; }
+    .fluent-header .global-search { order: 3; max-width: none; flex-basis: 100%; margin: 0; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
 
 @media print {

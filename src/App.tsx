@@ -753,16 +753,16 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#141414] light:bg-[#f5f5f5] text-white light:text-neutral-900 font-sans flex flex-col antialiased selection:bg-[#0f6cbd] selection:text-white">
+    <div className="min-h-screen bg-canvas text-on-brand font-sans flex flex-col antialiased selection:bg-brand selection:text-on-brand">
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`fixed bottom-6 left-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-2xl text-xs font-bold border transition-all animate-bounce ${
+          className={`fixed bottom-6 left-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-[4px]  text-xs font-bold border transition-colors duration-150  ${
             toast.type === 'success'
-              ? 'bg-[#1f1f1f] text-emerald-400 border-emerald-600'
+              ? 'bg-surface text-success-fg border-success-border'
               : toast.type === 'error'
-              ? 'bg-[#1f1f1f] text-rose-400 border-rose-600'
-              : 'bg-[#1f1f1f] text-blue-400 border-blue-600'
+              ? 'bg-surface text-critical-fg border-critical-border'
+              : 'bg-surface text-brand border-brand'
           }`}
         >
           <span>{toast.type === 'success' ? '✅' : toast.type === 'error' ? '❌' : 'ℹ️'}</span>
@@ -801,7 +801,7 @@ export default function App() {
       />
 
       {/* Main Viewport Container */}
-      <main className="flex-1 p-4 md:p-6 max-w-[1600px] w-full mx-auto">
+      <main className="flex-1 p-3 md:p-4 max-w-[1600px] w-full mx-auto">
         {activeView === 'dashboard' && (
           <DashboardView
             patients={patients}

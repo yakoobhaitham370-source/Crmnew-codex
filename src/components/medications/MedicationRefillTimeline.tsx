@@ -122,11 +122,11 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
   const getStatusBadgeStyle = (pattern: typeof analysis.overallPattern) => {
     switch (pattern) {
       case 'optimal':
-        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+        return 'bg-success-bg0/10 text-success-fg border-success-border';
       case 'mild-irregular':
-        return 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+        return 'bg-warning-bg0/10 text-warning-fg border-warning-border';
       case 'severe-irregular':
-        return 'bg-rose-500/10 text-rose-400 border-rose-500/30';
+        return 'bg-critical-bg0/10 text-critical-fg border-critical-border';
       case 'early-overuse':
         return 'bg-purple-500/10 text-purple-400 border-purple-500/30';
       default:
@@ -135,27 +135,27 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
   };
 
   return (
-    <div className="mt-3 border border-[#333333] light:border-neutral-300 rounded-xl bg-[#171717] light:bg-neutral-100/70 overflow-hidden text-xs transition-all">
+    <div className="mt-3 border border-stroke rounded-[4px] bg-surface overflow-hidden text-xs transition-colors duration-150">
       {/* Timeline Bar Header */}
-      <div className="p-3 bg-[#1e1e1e] light:bg-neutral-200/60 border-b border-[#333333] light:border-neutral-300 flex items-center justify-between flex-wrap gap-2">
+      <div className="p-3 bg-surface border-b border-stroke flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 font-bold text-neutral-200 light:text-neutral-800">
-            <Activity className="w-3.5 h-3.5 text-blue-400" />
+          <div className="flex items-center gap-1.5 font-bold text-neutral-200">
+            <Activity className="w-3.5 h-3.5 text-brand" />
             <span>{lang === 'ar' ? 'مخطط الصرف السابق ونمط الالتزام:' : 'Refill Timeline & Adherence Pattern:'}</span>
           </div>
 
           {/* PDC Adherence Badge */}
           <div
-            className={`px-2 py-0.5 rounded-full border text-[11px] font-bold flex items-center gap-1 ${getStatusBadgeStyle(
+            className={`px-2 py-0.5 rounded-[4px] border text-[11px] font-bold flex items-center gap-1 ${getStatusBadgeStyle(
               analysis.overallPattern
             )}`}
           >
             {analysis.overallPattern === 'optimal' ? (
-              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+              <CheckCircle2 className="w-3 h-3 text-success-fg" />
             ) : analysis.overallPattern === 'severe-irregular' ? (
-              <AlertTriangle className="w-3 h-3 text-rose-400" />
+              <AlertTriangle className="w-3 h-3 text-critical-fg" />
             ) : (
-              <Clock className="w-3 h-3 text-amber-400" />
+              <Clock className="w-3 h-3 text-warning-fg" />
             )}
             <span>
               {analysis.pdc}% {lang === 'ar' ? 'التزام (PDC)' : 'PDC Adherence'} •{' '}
@@ -164,7 +164,7 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
           </div>
 
           {/* Metric count */}
-          <span className="text-[11px] text-neutral-400 light:text-neutral-600">
+          <span className="text-[11px] text-neutral-400">
             ({analysis.totalRefillsCount} {lang === 'ar' ? 'مرات صرف مسجلة' : 'dispenses logged'})
           </span>
         </div>
@@ -175,7 +175,7 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
             <button
               type="button"
               onClick={() => setShowAddForm(prev => !prev)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/40 text-[11px] font-bold transition-all cursor-pointer"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-[4px] bg-blue-600/20 hover:bg-blue-600 text-brand hover:text-fg border border-brand text-[11px] font-bold transition-colors duration-150 cursor-pointer"
             >
               <Plus className="w-3 h-3" />
               <span>{lang === 'ar' ? 'إضافة صرف سابق' : 'Add Past Refill'}</span>
@@ -199,14 +199,14 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
           {showAddForm && onUpdateRefillHistory && (
             <form
               onSubmit={handleAddRefillDate}
-              className="p-3 bg-[#131313] light:bg-white border border-blue-900/60 light:border-blue-300 rounded-xl space-y-2.5 animate-in fade-in duration-150"
+              className="p-3 bg-canvas border border-brand rounded-[4px] space-y-2.5 animate-in fade-in duration-150"
             >
-              <div className="flex items-center justify-between font-bold text-blue-400 text-xs">
+              <div className="flex items-center justify-between font-bold text-brand text-xs">
                 <span>{lang === 'ar' ? 'تسجيل تاريخ صرف دوائي سابق' : 'Record Previous Refill Event'}</span>
                 <button
                   type="button"
                   onClick={() => setShowAddForm(false)}
-                  className="text-neutral-400 hover:text-white"
+                  className="text-neutral-400 hover:text-fg"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -222,7 +222,7 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                     value={inputDate}
                     max={formatYMD(new Date())}
                     onChange={e => setInputDate(e.target.value)}
-                    className="w-full bg-[#1c1c1c] light:bg-neutral-50 border border-[#383838] p-1.5 rounded-lg text-white light:text-neutral-900 text-xs font-mono outline-none focus:border-blue-500"
+                    className="w-full bg-surface border border-stroke p-1.5 rounded-[4px] text-fg text-xs font-mono outline-none focus:border-brand"
                     required
                   />
                 </div>
@@ -237,7 +237,7 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                     max={365}
                     value={inputDaysSupply}
                     onChange={e => setInputDaysSupply(parseInt(e.target.value, 10) || 30)}
-                    className="w-full bg-[#1c1c1c] light:bg-neutral-50 border border-[#383838] p-1.5 rounded-lg text-white light:text-neutral-900 text-xs font-bold text-center outline-none focus:border-blue-500"
+                    className="w-full bg-surface border border-stroke p-1.5 rounded-[4px] text-fg text-xs font-bold text-center outline-none focus:border-brand"
                     required
                   />
                 </div>
@@ -251,13 +251,13 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                     value={inputNote}
                     placeholder={lang === 'ar' ? 'مثال: صرف مستشفى، شراء خاص...' : 'e.g. Hospital discharge'}
                     onChange={e => setInputNote(e.target.value)}
-                    className="w-full bg-[#1c1c1c] light:bg-neutral-50 border border-[#383838] p-1.5 rounded-lg text-white light:text-neutral-900 text-xs outline-none focus:border-blue-500"
+                    className="w-full bg-surface border border-stroke p-1.5 rounded-[4px] text-fg text-xs outline-none focus:border-brand"
                   />
                 </div>
               </div>
 
               {/* Quick Presets */}
-              <div className="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-neutral-800 light:border-neutral-200">
+              <div className="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-neutral-800">
                 <div className="flex items-center gap-1.5 text-[11px] text-neutral-400">
                   <span>{lang === 'ar' ? 'اختصارات سريعة:' : 'Quick Presets:'}</span>
                   <button
@@ -293,7 +293,7 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                   </button>
                   <button
                     type="submit"
-                    className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-sm"
+                    className="px-3 py-1 rounded bg-blue-600 hover:bg-brand-subtle0 text-fg text-xs font-bold"
                   >
                     {lang === 'ar' ? 'حفظ الصرف السابق' : 'Save Event'}
                   </button>
@@ -311,18 +311,18 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                 const nextEvent = analysis.events[idx + 1];
 
                 // Gap status color styling
-                let gapColor = 'border-emerald-500 bg-emerald-500';
-                let gapTextColor = 'text-emerald-400';
-                let gapBg = 'bg-emerald-950/40 border-emerald-800/60';
+                let gapColor = 'border-success-border bg-success-bg0';
+                let gapTextColor = 'text-success-fg';
+                let gapBg = 'bg-success-bg border-success-border';
 
                 if (event.status === 'minor-delay') {
-                  gapColor = 'border-amber-400 bg-amber-400';
-                  gapTextColor = 'text-amber-300';
-                  gapBg = 'bg-amber-950/40 border-amber-800/60';
+                  gapColor = 'border-warning-border bg-warning-bg';
+                  gapTextColor = 'text-warning-fg';
+                  gapBg = 'bg-warning-bg border-warning-border';
                 } else if (event.status === 'moderate-gap' || event.status === 'critical-gap') {
-                  gapColor = 'border-rose-500 bg-rose-500';
-                  gapTextColor = 'text-rose-400';
-                  gapBg = 'bg-rose-950/50 border-rose-700';
+                  gapColor = 'border-critical-border bg-critical-bg0';
+                  gapTextColor = 'text-critical-fg';
+                  gapBg = 'bg-critical-bg border-critical-border';
                 } else if (event.status === 'early') {
                   gapColor = 'border-purple-400 bg-purple-400';
                   gapTextColor = 'text-purple-300';
@@ -335,9 +335,9 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                     <div className="flex flex-col items-center relative group shrink-0 w-36">
                       {/* Node Header Pill */}
                       <div
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold border mb-1 flex items-center gap-1 ${
+                        className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold border mb-1 flex items-center gap-1 ${
                           isLast
-                            ? 'bg-blue-500/20 text-blue-300 border-blue-500/50'
+                            ? 'bg-brand-subtle0/20 text-brand border-brand'
                             : 'bg-neutral-800 text-neutral-300 border-neutral-700'
                         }`}
                       >
@@ -353,10 +353,10 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
 
                       {/* Main Node Circle */}
                       <div
-                        className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs border-2 shadow-md transition-transform group-hover:scale-105 z-10 ${
+                        className={`w-9 h-9 rounded-[4px] flex items-center justify-center font-bold text-xs border-2  transition-transform group-hover:scale-105 z-10 ${
                           isLast
-                            ? 'bg-blue-600 text-white border-blue-400 shadow-blue-900/50 ring-4 ring-blue-500/20'
-                            : 'bg-[#222222] light:bg-white text-neutral-200 light:text-neutral-800 border-neutral-500'
+                            ? 'bg-blue-600 text-fg border-brand shadow-blue-900/50 ring-4 ring-blue-500/20'
+                            : 'bg-subtle text-neutral-200 border-neutral-500'
                         }`}
                       >
                         <span>{idx + 1}</span>
@@ -364,14 +364,14 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
 
                       {/* Date & Details under node */}
                       <div className="text-center mt-1.5 space-y-0.5">
-                        <div className="font-mono font-bold text-neutral-100 light:text-neutral-900 text-xs">
+                        <div className="font-mono font-bold text-neutral-100 text-xs">
                           {event.date}
                         </div>
                         <div className="text-[10px] text-neutral-400 font-semibold">
                           {event.daysSupply} {lang === 'ar' ? 'يوم / حبة' : 'days supply'}
                         </div>
                         {event.note && (
-                          <div className="text-[9px] text-amber-300/80 truncate max-w-[130px]" title={event.note}>
+                          <div className="text-[9px] text-warning-fg truncate max-w-[130px]" title={event.note}>
                             {event.note}
                           </div>
                         )}
@@ -382,7 +382,7 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                         <button
                           type="button"
                           onClick={() => handleRemoveRefill(event.date)}
-                          className="opacity-0 group-hover:opacity-100 p-1 rounded-full bg-rose-600 hover:bg-rose-500 text-white text-[9px] absolute -top-1 right-2 transition-opacity shadow cursor-pointer"
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded-[4px] bg-critical-bg hover:bg-critical-bg0 text-fg text-[9px] absolute -top-1 right-2 transition-opacity shadow cursor-pointer"
                           title={lang === 'ar' ? 'حذف هذا التاريخ' : 'Remove this date'}
                         >
                           <Trash2 className="w-2.5 h-2.5" />
@@ -395,7 +395,7 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                       <div className="flex-1 flex flex-col items-center justify-center px-1 relative min-w-[110px]">
                         {/* Gap Tag on connector */}
                         <div
-                          className={`px-2 py-0.5 rounded border text-[9px] font-bold mb-1 shadow-sm whitespace-nowrap z-10 ${gapBg} ${gapTextColor}`}
+                          className={`px-2 py-0.5 rounded border text-[9px] font-bold mb-1  whitespace-nowrap z-10 ${gapBg} ${gapTextColor}`}
                           title={lang === 'ar' ? event.statusLabelAr : event.statusLabelEn}
                         >
                           {event.daysToNext} {lang === 'ar' ? 'يوم فاصل' : 'days'}
@@ -410,25 +410,25 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                         <div className="w-full relative flex items-center">
                           <div
                             className={`w-full h-1 rounded ${
-                              event.gapDays && event.gapDays > 10 ? 'border-t-2 border-dashed border-rose-500' : gapColor
+                              event.gapDays && event.gapDays > 10 ? 'border-t-2 border-dashed border-critical-border' : gapColor
                             }`}
                           />
                           <div
-                            className={`w-2 h-2 rounded-full absolute right-1/2 translate-x-1/2 ${gapColor}`}
+                            className={`w-2 h-2 rounded-[4px] absolute right-1/2 translate-x-1/2 ${gapColor}`}
                           />
                         </div>
 
                         {/* Sub-label */}
                         <div className="text-[9px] text-neutral-400 mt-1 whitespace-nowrap">
                           {event.gapDays !== undefined && event.gapDays > 5 ? (
-                            <span className="text-rose-400 font-bold flex items-center gap-0.5">
+                            <span className="text-critical-fg font-bold flex items-center gap-0.5">
                               <span>⚠️</span>
                               <span>{lang === 'ar' ? 'فجوة انقطاع' : 'Therapy gap'}</span>
                             </span>
                           ) : event.gapDays !== undefined && event.gapDays < -3 ? (
                             <span className="text-purple-400 font-semibold">{lang === 'ar' ? 'صرف مبكر' : 'Early refill'}</span>
                           ) : (
-                            <span className="text-emerald-400 font-medium">{lang === 'ar' ? 'منتظم' : 'Continuous'}</span>
+                            <span className="text-success-fg font-medium">{lang === 'ar' ? 'منتظم' : 'Continuous'}</span>
                           )}
                         </div>
                       </div>
@@ -440,10 +440,10 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                         <div className="flex-1 flex flex-col items-center justify-center px-1 relative min-w-[110px]">
                           {/* Next due badge */}
                           <div
-                            className={`px-2 py-0.5 rounded border text-[9px] font-bold mb-1 shadow-sm whitespace-nowrap z-10 ${
+                            className={`px-2 py-0.5 rounded border text-[9px] font-bold mb-1  whitespace-nowrap z-10 ${
                               analysis.isOverdueForRefill
-                                ? 'bg-rose-950/60 border-rose-600 text-rose-300 animate-pulse'
-                                : 'bg-blue-950/40 border-blue-600 text-blue-300'
+                                ? 'bg-critical-bg border-critical-border text-critical-fg animate-pulse'
+                                : 'bg-brand-subtle border-brand text-brand'
                             }`}
                           >
                             {analysis.isOverdueForRefill
@@ -455,12 +455,12 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                           <div className="w-full relative flex items-center">
                             <div
                               className={`w-full h-1 border-t-2 border-dashed ${
-                                analysis.isOverdueForRefill ? 'border-rose-500' : 'border-blue-400'
+                                analysis.isOverdueForRefill ? 'border-critical-border' : 'border-brand'
                               }`}
                             />
                             <ArrowRight
                               className={`w-3.5 h-3.5 absolute right-0 ${
-                                analysis.isOverdueForRefill ? 'text-rose-400' : 'text-blue-400'
+                                analysis.isOverdueForRefill ? 'text-critical-fg' : 'text-brand'
                               }`}
                             />
                           </div>
@@ -473,10 +473,10 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                         {/* Future Target Node */}
                         <div className="flex flex-col items-center relative shrink-0 w-36">
                           <div
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold border mb-1 flex items-center gap-1 ${
+                            className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold border mb-1 flex items-center gap-1 ${
                               analysis.isOverdueForRefill
-                                ? 'bg-rose-500/20 text-rose-300 border-rose-500/50'
-                                : 'bg-blue-500/10 text-blue-300 border-blue-500/30'
+                                ? 'bg-critical-bg0/20 text-critical-fg border-critical-border'
+                                : 'bg-brand-subtle0/10 text-brand border-brand'
                             }`}
                           >
                             <Clock className="w-2.5 h-2.5" />
@@ -484,22 +484,22 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
                           </div>
 
                           <div
-                            className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs border-2 border-dashed z-10 ${
+                            className={`w-9 h-9 rounded-[4px] flex items-center justify-center font-bold text-xs border-2 border-dashed z-10 ${
                               analysis.isOverdueForRefill
-                                ? 'bg-rose-950/40 text-rose-300 border-rose-500 ring-2 ring-rose-500/30'
-                                : 'bg-[#1a1a1a] light:bg-neutral-100 text-blue-400 border-blue-400'
+                                ? 'bg-critical-bg text-critical-fg border-critical-border ring-2 ring-rose-500/30'
+                                : 'bg-surface text-brand border-brand'
                             }`}
                           >
                             <Calendar className="w-4 h-4" />
                           </div>
 
                           <div className="text-center mt-1.5 space-y-0.5">
-                            <div className="font-mono font-bold text-neutral-200 light:text-neutral-800 text-xs">
+                            <div className="font-mono font-bold text-neutral-200 text-xs">
                               {analysis.nextProjectedRefillDate}
                             </div>
                             <div
                               className={`text-[10px] font-bold ${
-                                analysis.isOverdueForRefill ? 'text-rose-400' : 'text-blue-400'
+                                analysis.isOverdueForRefill ? 'text-critical-fg' : 'text-brand'
                               }`}
                             >
                               {analysis.isOverdueForRefill
@@ -518,23 +518,23 @@ export const MedicationRefillTimeline: React.FC<MedicationRefillTimelineProps> =
 
           {/* Clinical Adherence Insight & Pattern Box */}
           <div
-            className={`p-3 rounded-xl border flex items-start gap-3 ${
+            className={`p-3 rounded-[4px] border flex items-start gap-3 ${
               analysis.overallPattern === 'optimal'
-                ? 'bg-emerald-950/20 border-emerald-700/40 text-emerald-200'
+                ? 'bg-success-bg border-success-border text-success-fg'
                 : analysis.overallPattern === 'severe-irregular'
-                ? 'bg-rose-950/30 border-rose-700/60 text-rose-200'
+                ? 'bg-critical-bg border-critical-border text-critical-fg'
                 : analysis.overallPattern === 'early-overuse'
                 ? 'bg-purple-950/25 border-purple-700/40 text-purple-200'
-                : 'bg-amber-950/20 border-amber-700/40 text-amber-200'
+                : 'bg-warning-bg border-warning-border text-warning-fg'
             }`}
           >
-            <div className="p-1.5 rounded-lg bg-black/30 shrink-0 mt-0.5">
+            <div className="p-1.5 rounded-[4px] bg-black/30 shrink-0 mt-0.5">
               {analysis.overallPattern === 'optimal' ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <CheckCircle2 className="w-4 h-4 text-success-fg" />
               ) : analysis.overallPattern === 'severe-irregular' ? (
-                <AlertTriangle className="w-4 h-4 text-rose-400" />
+                <AlertTriangle className="w-4 h-4 text-critical-fg" />
               ) : (
-                <Clock className="w-4 h-4 text-amber-400" />
+                <Clock className="w-4 h-4 text-warning-fg" />
               )}
             </div>
 

@@ -159,14 +159,14 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Header card */}
-      <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl p-5 shadow-sm space-y-4">
+      <div className="bg-surface border border-stroke rounded-[4px] p-5 space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <div className="font-extrabold text-lg text-white light:text-neutral-900 flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-400" />
+            <div className="font-extrabold text-lg text-fg flex items-center gap-2">
+              <Users className="w-5 h-5 text-brand" />
               <span>{lang === 'ar' ? 'دليل المرضى وسجلات العوائل المشتركة' : 'Patients Directory & Family Registry'}</span>
             </div>
-            <div className="text-xs text-neutral-400 light:text-neutral-500 mt-1">
+            <div className="text-xs text-neutral-400 mt-1">
               {lang === 'ar'
                 ? `إجمالي ${activePatients.length} ملف نشط، مقسمين على ${uniqueFamilies.length} عائلة مسجلة`
                 : `${activePatients.length} active chronic patients across ${uniqueFamilies.length} families`}
@@ -176,14 +176,14 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-xs font-semibold bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 transition-colors cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>{lang === 'ar' ? 'تصدير CSV' : 'Export CSV'}</span>
             </button>
             <button
               onClick={() => onOpenPatientModal()}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#0f6cbd] hover:bg-[#115ea3] text-white shadow-sm transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-[4px] text-xs font-bold bg-brand hover:bg-brand-hover text-on-brand transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>{lang === 'ar' ? 'تسجيل مريض جديد' : 'New Patient'}</span>
@@ -201,13 +201,13 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
               value={effectiveSearch}
               onChange={e => handleSearchInput(e.target.value)}
               placeholder={lang === 'ar' ? 'بحث بالاسم، الهاتف، التشخيص، الدواء...' : 'Search name, phone, diagnosis, drug...'}
-              className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 text-xs rounded-lg px-8 py-2.5 outline-none focus:border-blue-500 pr-9"
+              className="w-full bg-canvas border border-stroke text-fg text-xs rounded-[4px] px-8 py-2.5 outline-none focus:border-brand pr-9"
             />
             {effectiveSearch && (
               <button
                 type="button"
                 onClick={handleClear}
-                className="absolute left-3 top-3 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                className="absolute left-3 top-3 text-neutral-400 hover:text-fg transition-colors cursor-pointer"
                 title={lang === 'ar' ? 'مسح البحث' : 'Clear search'}
               >
                 <X className="w-3.5 h-3.5" />
@@ -221,7 +221,7 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
             <select
               value={familyFilter}
               onChange={e => setFamilyFilter(e.target.value)}
-              className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 text-xs rounded-lg p-2.5 outline-none focus:border-blue-500"
+              className="w-full bg-canvas border border-stroke text-fg text-xs rounded-[4px] p-2.5 outline-none focus:border-brand"
             >
               <option value="ALL">{lang === 'ar' ? 'كل العوائل والأفراد' : 'All Families'}</option>
               <option value="NO_FAMILY">{lang === 'ar' ? 'المرضى بدون عائلة مسجلة' : 'Individual (No family)'}</option>
@@ -237,7 +237,7 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
           <select
             value={adherenceFilter}
             onChange={e => setAdherenceFilter(e.target.value)}
-            className="w-full bg-[#141414] light:bg-neutral-50 border border-[#383838] light:border-neutral-300 text-white light:text-neutral-900 text-xs rounded-lg p-2.5 outline-none focus:border-blue-500"
+            className="w-full bg-canvas border border-stroke text-fg text-xs rounded-[4px] p-2.5 outline-none focus:border-brand"
           >
             <option value="ALL">{lang === 'ar' ? 'جميع مستويات الالتزام' : 'All Adherence Levels'}</option>
             <option value="HIGH">{lang === 'ar' ? 'ملتزمون ممتازون (PDC ≥ 80%)' : 'High Adherence (≥80%)'}</option>
@@ -248,9 +248,9 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
 
       {/* Active Search Filter Banner */}
       {effectiveDebouncedSearch.trim() && (
-        <div className="bg-blue-950/40 light:bg-blue-50 border border-blue-800/60 light:border-blue-300 rounded-xl px-4 py-2.5 flex items-center justify-between gap-3 text-xs animate-in fade-in duration-150">
-          <div className="flex items-center gap-2 text-blue-300 light:text-blue-900 font-medium">
-            <Search className="w-4 h-4 text-blue-400 shrink-0" />
+        <div className="bg-brand-subtle border border-brand rounded-[4px] px-4 py-2.5 flex items-center justify-between gap-3 text-xs animate-in fade-in duration-150">
+          <div className="flex items-center gap-2 text-brand font-medium">
+            <Search className="w-4 h-4 text-brand shrink-0" />
             <span>
               {lang === 'ar'
                 ? `تصفية نشطة للبحث عن: «${effectiveDebouncedSearch}» (${filteredPatients.length} مريض مطابق)`
@@ -259,7 +259,7 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
           </div>
           <button
             onClick={handleClear}
-            className="flex items-center gap-1 px-2.5 py-1 rounded bg-blue-900/60 light:bg-blue-200 hover:bg-blue-900 light:hover:bg-blue-300 text-blue-200 light:text-blue-900 border border-blue-700/50 light:border-blue-400 text-[11px] font-bold transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 rounded bg-brand-subtle hover:bg-brand-subtle text-brand border border-brand text-[11px] font-bold transition-colors cursor-pointer"
           >
             <X className="w-3 h-3" />
             <span>{lang === 'ar' ? 'إلغاء التصفية' : 'Clear Filter'}</span>
@@ -268,10 +268,10 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
       )}
 
       {/* Patients Table */}
-      <div className="bg-[#1f1f1f] light:bg-white border border-[#383838] light:border-neutral-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-surface border border-stroke rounded-[4px] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-right dir-rtl text-xs">
-            <thead className="bg-[#292929] light:bg-neutral-100 text-neutral-300 light:text-neutral-700 font-bold border-b border-[#383838]">
+            <thead className="bg-subtle text-neutral-300 font-bold border-b border-stroke">
               <tr>
                 <th className="py-3 px-4">{lang === 'ar' ? 'المعرف' : 'ID'}</th>
                 <th className="py-3 px-4">{lang === 'ar' ? 'اسم المريض' : 'Patient Name'}</th>
@@ -284,25 +284,25 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
                 <th className="py-3 px-4 text-center">{lang === 'ar' ? 'إدارة الملف' : 'Actions'}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2e2e2e] light:divide-neutral-200 text-neutral-200 light:text-neutral-800">
+            <tbody className="divide-y divide-stroke text-neutral-200">
               {activePatients.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="text-center py-14 text-neutral-400">
                     <div className="max-w-md mx-auto space-y-3">
-                      <div className="w-12 h-12 rounded-2xl bg-blue-950/60 light:bg-blue-100 text-blue-400 light:text-blue-700 border border-blue-800/40 flex items-center justify-center mx-auto shadow-inner">
+                      <div className="w-12 h-12 rounded-[4px] bg-brand-subtle text-brand border border-brand flex items-center justify-center mx-auto shadow-inner">
                         <Users className="w-6 h-6" />
                       </div>
-                      <div className="font-bold text-sm text-white light:text-neutral-900">
+                      <div className="font-bold text-sm text-fg">
                         {lang === 'ar' ? 'دليل المرضى فارغ حالياً' : 'Patient Directory is Empty'}
                       </div>
-                      <p className="text-xs text-neutral-400 light:text-neutral-500 max-w-sm mx-auto leading-relaxed">
+                      <p className="text-xs text-neutral-400 max-w-sm mx-auto leading-relaxed">
                         {lang === 'ar'
                           ? 'تم حذف البيانات النموذجية التجريبية بنجاح. يمكنك الآن البدء بتسجيل أول مريض حقيقي في الصيدلية.'
                           : 'Sample demo records have been removed. You can now register your first patient.'}
                       </p>
                       <button
                         onClick={() => onOpenPatientModal()}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold bg-[#0f6cbd] hover:bg-[#115ea3] text-white transition-all shadow-md cursor-pointer mt-1"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-[4px] text-xs font-bold bg-brand hover:bg-brand-hover text-on-brand transition-colors duration-150 cursor-pointer mt-1"
                       >
                         <Plus className="w-4 h-4" />
                         <span>{lang === 'ar' ? 'تسجيل مريض جديد الآن' : 'Add First Patient Now'}</span>
@@ -320,24 +320,24 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
                 paginatedPatients.map(p => {
                   const pdc = calculatePDC(p);
                   return (
-                    <tr key={p.id} className="hover:bg-neutral-800/40 light:hover:bg-neutral-50 transition-colors">
+                    <tr key={p.id} className="hover:bg-neutral-800/40 transition-colors">
                       <td className="py-3 px-4 font-mono text-neutral-400 text-[11px]">{p.id}</td>
-                      <td className="py-3 px-4 font-bold text-white light:text-neutral-900">
+                      <td className="py-3 px-4 font-bold text-fg">
                         <button
                           onClick={() => onOpenPatientModal(p.id)}
-                          className="hover:text-blue-400 text-right hover:underline transition-colors cursor-pointer"
+                          className="hover:text-brand text-right hover:underline transition-colors cursor-pointer"
                         >
                           {p.name}
                         </button>
                       </td>
-                      <td className="py-3 px-3 text-neutral-300 light:text-neutral-700">
+                      <td className="py-3 px-3 text-neutral-300">
                         {p.age ? `${p.age} سنة` : '—'} / {p.gender || '—'}
                       </td>
                       <td className="py-3 px-3">
                         {p.familyTag ? (
                           <button
                             onClick={() => onOpenHouseholdModal(p.familyTag!)}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-950/60 text-blue-300 border border-blue-700/50 hover:bg-blue-900 transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[11px] font-bold bg-brand-subtle text-brand border border-brand hover:bg-brand-subtle transition-colors cursor-pointer"
                           >
                             <span>👨‍👩‍👧‍👦</span>
                             <span>{p.familyTag}</span>
@@ -346,11 +346,11 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
                           <span className="text-neutral-500 text-[11px]">فردي</span>
                         )}
                       </td>
-                      <td className="py-3 px-3 font-mono text-neutral-300 light:text-neutral-700">
+                      <td className="py-3 px-3 font-mono text-neutral-300">
                         {p.phone}
                       </td>
                       <td className="py-3 px-4">
-                        <span className="font-semibold text-white light:text-neutral-900">
+                        <span className="font-semibold text-fg">
                           {(p.medications || []).length} {lang === 'ar' ? 'أدوية' : 'meds'}
                         </span>
                         <div className="text-[11px] text-neutral-400 truncate max-w-[200px]">
@@ -361,15 +361,15 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
                         <span
                           className={`inline-block font-extrabold px-2 py-0.5 rounded text-[11px] ${
                             pdc >= 80
-                              ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-700/50'
-                              : 'bg-rose-950/60 text-rose-400 border border-rose-700/50'
+                              ? 'bg-success-bg text-success-fg border border-success-border'
+                              : 'bg-critical-bg text-critical-fg border border-critical-border'
                           }`}
                         >
                           {pdc}%
                         </span>
                       </td>
                       <td className="py-3 px-3">
-                        <span className="inline-flex items-center gap-1 font-bold text-amber-400 bg-amber-950/50 border border-amber-800/40 px-2 py-0.5 rounded text-[11px]">
+                        <span className="inline-flex items-center gap-1 font-bold text-warning-fg bg-warning-bg border border-warning-border px-2 py-0.5 rounded text-[11px]">
                           <Star className="w-3 h-3 fill-amber-400" />
                           <span>{p.loyaltyPoints || 0}</span>
                         </span>
@@ -378,7 +378,7 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
                         <div className="flex items-center justify-center gap-1.5">
                           <button
                             onClick={() => onOpenPatientModal(p.id)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 transition-colors font-semibold cursor-pointer"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-[4px] bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 transition-colors font-semibold cursor-pointer"
                           >
                             <FileText className="w-3.5 h-3.5" />
                             <span>{lang === 'ar' ? 'الملف' : 'Dossier'}</span>
@@ -386,15 +386,15 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
                           <button
                             onClick={() => onOpenPatientModal(p.id, 'analytics')}
                             title={lang === 'ar' ? 'عرض مخطط الالتزام والمؤشرات الحيوية' : 'View Adherence & Vitals Chart'}
-                            className="p-1.5 rounded-lg bg-indigo-950/70 hover:bg-indigo-900 text-indigo-300 border border-indigo-700/60 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-[4px] bg-brand-subtle hover:bg-brand-subtle text-brand border border-brand transition-colors cursor-pointer"
                           >
-                            <LineChart className="w-3.5 h-3.5 text-indigo-400" />
+                            <LineChart className="w-3.5 h-3.5 text-brand" />
                           </button>
                           {p.familyTag && (
                             <button
                               onClick={() => onOpenHouseholdModal(p.familyTag!)}
                               title={lang === 'ar' ? 'توحيد صرف العائلة' : 'Household Sync'}
-                              className="p-1.5 rounded-lg bg-blue-950 text-blue-300 border border-blue-800 hover:bg-blue-900 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-[4px] bg-brand-subtle text-brand border border-brand hover:bg-brand-subtle transition-colors cursor-pointer"
                             >
                               👨‍👩‍👧‍👦
                             </button>
@@ -402,7 +402,7 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
                           <button
                             onClick={() => onArchivePatient(p.id)}
                             title={lang === 'ar' ? 'تحويل للأرشيف' : 'Archive'}
-                            className="p-1.5 rounded-lg bg-neutral-800 text-neutral-400 hover:text-rose-400 border border-neutral-700 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-[4px] bg-neutral-800 text-neutral-400 hover:text-critical-fg border border-neutral-700 transition-colors cursor-pointer"
                           >
                             <Archive className="w-3.5 h-3.5" />
                           </button>
@@ -418,21 +418,21 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
 
         {/* High-Performance Pagination Footer */}
         {filteredPatients.length > 0 && (
-          <div className="bg-[#242424] light:bg-neutral-50 border-t border-[#383838] light:border-neutral-200 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="bg-subtle border-t border-stroke px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
             {/* Range Counter & Page Size Selector */}
-            <div className="flex items-center gap-3 text-neutral-300 light:text-neutral-700 flex-wrap">
+            <div className="flex items-center gap-3 text-neutral-300 flex-wrap">
               <span>
                 {lang === 'ar'
                   ? `عرض ${startRecord} - ${endRecord} من إجمالي ${filteredPatients.length} مريض`
                   : `Showing ${startRecord}-${endRecord} of ${filteredPatients.length} patients`}
               </span>
 
-              <div className="flex items-center gap-1.5 bg-[#171717] light:bg-white border border-[#383838] light:border-neutral-300 rounded px-2 py-0.5">
+              <div className="flex items-center gap-1.5 bg-surface border border-stroke rounded px-2 py-0.5">
                 <span className="text-[11px] text-neutral-400">{lang === 'ar' ? 'لكل صفحة:' : 'Per page:'}</span>
                 <select
                   value={pageSize}
                   onChange={e => setPageSize(Number(e.target.value))}
-                  className="bg-transparent text-white light:text-neutral-900 text-xs font-semibold outline-none cursor-pointer"
+                  className="bg-transparent text-fg text-xs font-semibold outline-none cursor-pointer"
                 >
                   <option value={25}>25</option>
                   <option value={50}>50</option>
